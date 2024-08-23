@@ -1,5 +1,4 @@
 from config import db
-from flask import current_app
 
 def init_db(app):
     with app.app_context():
@@ -27,6 +26,7 @@ class TcontSpeedProfileModel(db.Model):
             'id':self.id,
             'name':self.name,
             'type':self.type,
+            'fixed':self.fixed,
             'assured':self.assured,
             'maximum':self.maximum
         }

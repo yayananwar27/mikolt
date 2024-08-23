@@ -33,6 +33,8 @@ from userlogin.models import init_db as init_db_userlogin
 from sites.models import init_db as init_db_sites
 from mmikrotik.models import init_db as init_db_mmikrotik
 from clientppp.models import init_db as init_db_clientppp
+from logmikolt.model import init_db as init_db_logmikolt
+from ospeedprofile.models import init_db as init_db_speedprofile
 
 scheduler.init_app(app)
 db.init_app(app)
@@ -41,6 +43,8 @@ init_db_userlogin(app)
 init_db_sites(app)
 init_db_mmikrotik(app)
 init_db_clientppp(app)
+init_db_logmikolt(app)
+init_db_speedprofile(app)
 
 # Middleware to log the request processing time
 @app.before_request
@@ -115,6 +119,12 @@ with app.app_context():
     app.register_blueprint(dashboard_api, url_prefix='/dashboard')
     init_docs_dashboard(docs)
     
+    #speed profile
+    from ospeedprofile.app import init_docs as init_docs_speedprofile, speedprofile_api
+    app.register_blueprint(speedprofile_api, url_prefix='/speedprofile')
+    init_docs_speedprofile(docs)
+    
+
 if __name__ == "__main__":
 
     import os

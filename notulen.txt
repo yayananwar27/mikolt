@@ -1,0 +1,55 @@
+Draft 20 Jul 2024
+
+List Feature yang ingin dibuat
+* Untuk smartolt ini akan digabung dashboardnya dengan manajemen mikrotik
+* https://wifian.smartolt.com/onu/unconfigured
+* https://wifian.smartolt.com/onu/configured
+
+Register-> pakai telnet dan ada interval ->ada opsi untuk button sync (realtime)
+
+User roles:
+* Superuser -> read/write
+* Admin Persite (zone) -> read
+* Teknisi persite (zone) -> read/write
+
+Urgent
+* Status
+* Name
+* SN/MAC
+* ONU
+* VLAN
+* Detail OLT
+-> Redaman ONU/OLT Rx signal
+* https://wifian.smartolt.com/onu/configured?status=los
+* https://wifian.smartolt.com/diagnostics?signal=critical,warning
+* https://wifian.smartolt.com/speed_profiles
+* https://wifian.smartolt.com/olt
+
+Detail OLT
+* Autoimport existing ONT
+
+
+Catatan:
+* Kalau ke ZTE bisa buat langsung SSID, kalau brand lain belum tentu
+* ONU maksimal 128
+
+Brand ada 3
+* ZTE
+* Huawei - > Setup via ONU Webpage
+* Fiberhome -> Setup via ONU Webpage
+
+
+Dokumentasi/tutorial
+* Cara konek ONT dari tim wifian
+* OLT baru ZTE
+
+Technical: 
+* VLAN
+* Vlan bridge
+* IPTV
+* IGMP
+https://wifian.smartolt.com/olt/add
+* Versinya sama semua (karena semua sudah seragam)
+* Nama port saling sinkron antara aplikasi dan hardware
+
+Untuk SOP Redaman di wifian seperti apa?
