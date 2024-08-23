@@ -18,11 +18,11 @@ class MikoltLoggingModel(db.Model):
     __tablename__ = 'mikoltlogging'
     id = db.Column(db.String(255), primary_key=True, unique=True)
     timestamp = db.Column(db.DateTime, nullable=False)
-    operator = db.Column(db.String(255), nullabel=False)
-    name_modul = db.Column(db.String(255), nullabel=False)
-    refrence_id = db.Column(db.String(255), nullabel=False)
-    action = db.Column(db.String(255), nullabel=False)
-    data = db.Column(db.Text, nullabel=True)
+    operator = db.Column(db.String(255), nullable=False)
+    name_modul = db.Column(db.String(255), nullable=False)
+    refrence_id = db.Column(db.String(255), nullable=False)
+    action = db.Column(db.String(255), nullable=False)
+    data = db.Column(db.Text, nullable=True)
 
     def __init__(self, operator, name_modul, refrence_id, action, data=None):
         self.id = created_uuid()
