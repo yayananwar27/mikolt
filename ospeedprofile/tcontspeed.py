@@ -63,6 +63,7 @@ class TcontSpeedprofileApi(MethodResource, Resource):
             name, _type, fixed, assured, maximum
             )
         db.session.add(new_name)
+        db.session.commit()
         
         new_logging = MikoltLoggingModel(
             operator.username, 

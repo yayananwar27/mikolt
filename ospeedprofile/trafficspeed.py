@@ -62,7 +62,7 @@ class TrafficSpeedprofileApi(MethodResource, Resource):
             name, sir, pir, cbs, pbs
         )
         db.session.add(new_name)
-        
+        db.session.commit()
         new_logging = MikoltLoggingModel(
             operator.username, 
             'speedprofile-traffic', 
