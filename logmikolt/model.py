@@ -12,7 +12,7 @@ def created_time():
     return str(date)
 
 def created_uuid():
-    return str(uuid.uuid1)
+    return str(uuid.uuid1())
 
 class MikoltLoggingModel(db.Model):
     __tablename__ = 'mikoltlogging'
