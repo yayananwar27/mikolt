@@ -1,0 +1,26 @@
+OLT-C320-ARENJAYA(config)#pon
+OLT-C320-ARENJAYA(config-pon)#onu-type test-on epon ?
+  description   Description
+  location      PON location
+  protect-type  Protect type
+  speed         Speed
+
+OLT-C320-ARENJAYA(config-pon)#onu-type test-on gpon ?
+  default-multicast-range    Default multicast address range
+  description                Description
+  ex-omci                    Extended OMCI configure mode
+  location                   PON location
+  max-flow-perswitch         Max flow per switch
+  max-gemport                Max GEM port
+  max-iphost                 Max IP host
+  max-ipv6-host              Max IPv6 host
+  max-switch-perslot         Max switch per slot
+  max-tcont                  Max T-CONT
+  max-veip                   Max VEIP
+  mgc-cfg-mode               MGC configure mode
+  omci-send-mode             OMCI send mode
+  service-ability            Service ability
+  service-mgmt-via-non-omci  Service management via non OMCI
+  vrg                        Indicates VRG ONU
+  <cr>
+

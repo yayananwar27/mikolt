@@ -35,6 +35,7 @@ from mmikrotik.models import init_db as init_db_mmikrotik
 from clientppp.models import init_db as init_db_clientppp
 from logmikolt.model import init_db as init_db_logmikolt
 from ospeedprofile.models import init_db as init_db_speedprofile
+from oonutypes.models import init_db as init_db_onutypes
 
 scheduler.init_app(app)
 db.init_app(app)
@@ -45,6 +46,7 @@ init_db_mmikrotik(app)
 init_db_clientppp(app)
 init_db_logmikolt(app)
 init_db_speedprofile(app)
+init_db_onutypes(app)
 
 # Middleware to log the request processing time
 @app.before_request
@@ -124,6 +126,10 @@ with app.app_context():
     app.register_blueprint(speedprofile_api, url_prefix='/speedprofile')
     init_docs_speedprofile(docs)
     
+    #onu types
+    from oonutypes.app import init_docs as init_docs_onutypes, onutypes_api
+    app.register_blueprint(onutypes_api, url_prefix='/onutypes')
+    init_docs_onutypes(docs)
 
 if __name__ == "__main__":
 

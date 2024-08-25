@@ -104,6 +104,9 @@ class TrafficSpeedprofileApi(MethodResource, Resource):
             abort(404, 'id not found')
         
         if 'name' in kwargs:
+            name_exists = TrafficSpeedProfileModel.query.filter_by(name=kwargs['name']).first()
+            if name_exists:
+                abort(409, 'Name Exists')
             id_exists.name = kwargs['name']
         if 'sir' in kwargs:
             id_exists.sir = kwargs['sir']
@@ -129,6 +132,7 @@ class TrafficSpeedprofileApi(MethodResource, Resource):
     
     @doc(description='Delete Traffic Speed Profile', tags=['OLT Speed Profile'], security=[{"ApiKeyAuth": []}])
     @use_kwargs(DeleteTrafficSpeedProfileSchema, location=('json'))
+    @marshal_with(TrafficSpeedProfileSchema)
     @auth.login_required(role=['api', 'noc', 'superadmin'])
     def delete(self, **kwargs):
         operator = auth.current_user()
@@ -136,6 +140,7 @@ class TrafficSpeedprofileApi(MethodResource, Resource):
 
         id_exists = TrafficSpeedProfileModel.query.filter_by(id=id).first()
         if id_exists:
+            data = id_exists.to_dict()
             db.session.delete(id_exists)
             db.session.commit()
             new_logging = MikoltLoggingModel(
@@ -147,7 +152,7 @@ class TrafficSpeedprofileApi(MethodResource, Resource):
             db.session.add(new_logging)
             db.session.commit()
 
-            return jsonify({'message':'success'})
+            return jsonify({'message':'success','data':data})
 
         abort(404, 'id not found')
 

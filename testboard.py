@@ -1,5 +1,7 @@
 import re
-
+# 103.247.22.229:234
+# yayan
+# Yayan@12345
 # String input
 text = "System Description: C320 Version V2.1.0 Software, Copyright (c) by ZTE Corporation Compiled"
 
@@ -64,4 +66,4 @@ print(parsed_data)
 #show card-temperature
 #show processor
 #show card slotno 4
-
+#reset-card slotno 4 (reboot card masih di cari lagi)
