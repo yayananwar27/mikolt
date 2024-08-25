@@ -123,12 +123,12 @@ with app.app_context():
     
     #speed profile
     from ospeedprofile.app import init_docs as init_docs_speedprofile, speedprofile_api
-    app.register_blueprint(speedprofile_api, url_prefix='/speedprofile')
+    app.register_blueprint(speedprofile_api, url_prefix='/olt/speedprofile')
     init_docs_speedprofile(docs)
     
     #onu types
     from oonutypes.app import init_docs as init_docs_onutypes, onutypes_api
-    app.register_blueprint(onutypes_api, url_prefix='/onutypes')
+    app.register_blueprint(onutypes_api, url_prefix='/olt/onutypes')
     init_docs_onutypes(docs)
 
 if __name__ == "__main__":
