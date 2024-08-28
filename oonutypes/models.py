@@ -47,16 +47,18 @@ class OnuTypesModel(db.Model):
         self.max_wifi = max_wifi
 
     def to_dict(self):
-        if self.pon_type == 'epon':
-            return {
-                'name':self.name,
-                'pon_type':self.pon_type,
-                'description':self.description,
-                'max_pots':self.max_pots,
-                'max_eth':self.max_eth,
-                'max_wifi':self.max_wifi
-            }
+        # if self.pon_type == 'epon':
+        #     return {
+        #         'id':self.id,
+        #         'name':self.name,
+        #         'pon_type':self.pon_type,
+        #         'description':self.description,
+        #         'max_pots':self.max_pots,
+        #         'max_eth':self.max_eth,
+        #         'max_wifi':self.max_wifi
+        #     }
         return {
+            'id':self.id,
             'name':self.name,
             'pon_type':self.pon_type,
             'description':self.description,

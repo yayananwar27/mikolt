@@ -47,7 +47,7 @@ class DeleteOnuTypeSchema(Schema):
 class OnuTypeApi(MethodResource, Resource):
     @doc(description='Create Onu type', tags=['OLT Onu Type'], security=[{"ApiKeyAuth": []}])
     @use_kwargs(CreateOnuTypeSchema, location=('json'))
-    @marshal_with(OnuTypeSchema)
+    @marshal_with(OnuTypeSchema, code=201)
     @auth.login_required(role=['api', 'noc', 'superadmin'])
     def post(self, **kwargs):
         operator = auth.current_user()
@@ -86,7 +86,7 @@ class OnuTypeApi(MethodResource, Resource):
             new_onu_type.max_wifi = kwargs['max_wifi']
 
         db.session.add(new_onu_type)
-        db.session.commit
+        db.session.commit()
 
         new_logging = MikoltLoggingModel(
             operator.username, 
