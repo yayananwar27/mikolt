@@ -4,13 +4,14 @@ def init_db(app):
     with app.app_context():
         db.create_all()
 
+
 class OltMerkModels(db.Model):
     __tablename__ = 'oltmerk'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     merk = db.Column(db.String(255), unique=False, nullable=False)
     model = db.Column(db.String(255), unique=False, nullable=False)
-    oltmerksoft_fk = db.relationship('oltmerksoft', backref='oltmerk', cascade="all, delete", passive_deletes=True, lazy=True)
-    oltmerkdata_fk = db.relationship('oltdevices', backref='oltsoftware', cascade="all, delete", passive_deletes=True, lazy=True)
+    oltmerksoft_fk = db.relationship('OltMerkSoftModels', backref='oltmerk', cascade="all, delete", passive_deletes=True, lazy=True)
+    oltmerkdata_fk = db.relationship('OltDevicesModels', backref='oltsoftware', cascade="all, delete", passive_deletes=True, lazy=True)
 
     def __init__(self, merk, model):
         self.merk = merk
@@ -38,8 +39,8 @@ class OltSoftModels(db.Model):
     __tablename__ = 'oltsoftware'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(255), unique=True, nullable=False)
-    oltsoftmerk_fk = db.relationship('oltmerksoft', backref='oltsoftware', cascade="all, delete", passive_deletes=True, lazy=True)
-    oltsoftdata_fk = db.relationship('oltdevices', backref='oltsoftware', cascade="all, delete", passive_deletes=True, lazy=True)
+    oltsoftmerk_fk = db.relationship('OltMerkSoftModels', backref='oltsoftware', cascade="all, delete", passive_deletes=True, lazy=True)
+    oltsoftdevice_fk = db.relationship('OltDevicesModels', backref='oltsoftware_device', cascade="all, delete", passive_deletes=True, lazy=True)
     def __init__(self, name):
         self.name = name
 
