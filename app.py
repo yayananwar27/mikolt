@@ -36,7 +36,7 @@ from clientppp.models import init_db as init_db_clientppp
 from logmikolt.model import init_db as init_db_logmikolt
 from ospeedprofile.models import init_db as init_db_speedprofile
 from oonutypes.models import init_db as init_db_onutypes
-from oolt.models import init_db as init_db_olt
+from ooltmaster.models import init_db as init_db_oltmaster
 
 scheduler.init_app(app)
 db.init_app(app)
@@ -48,7 +48,7 @@ init_db_clientppp(app)
 init_db_logmikolt(app)
 init_db_speedprofile(app)
 init_db_onutypes(app)
-init_db_olt(app)
+init_db_oltmaster(app)
 
 # Middleware to log the request processing time
 @app.before_request
@@ -132,6 +132,11 @@ with app.app_context():
     from oonutypes.app import init_docs as init_docs_onutypes, onutypes_api
     app.register_blueprint(onutypes_api, url_prefix='/olt/onutypes')
     init_docs_onutypes(docs)
+
+    #Olt Master
+    from ooltmaster.app import init_docs as init_docs_oltmaster, oltmaster_api
+    app.register_blueprint(oltmaster_api, url_prefix='/olt/oltmaster')
+    init_docs_oltmaster(docs)
 
 if __name__ == "__main__":
 
