@@ -23,7 +23,7 @@ class OltMerkModels(db.Model):
             'model':self.model
         }
     
-    def soft_aval(self):
+    def soft_avai(self):
         data = []
         list_soft = OltMerkSoftModels.query.filter_by(id_merk=self.id).all()
         
@@ -49,7 +49,7 @@ class OltSoftModels(db.Model):
             'name':self.name
         }
     
-    def merk_aval(self):
+    def merk_avai(self):
         data = []
         list_soft = OltMerkSoftModels.query.filter_by(id_software=self.id).all()
         

@@ -83,10 +83,23 @@ class OltMerkApi(MethodResource, Resource):
         if not id_exists:
             abort(404, 'id not found')
         
-        if 'merk' in kwargs['merk']:
+        if 'merk' in kwargs:
+            if 'model' in kwargs:
+                name_exists = OltMerkModels.query.filter_by(merk=kwargs['merk'], model=kwargs['model']).first()
+            else:
+                name_exists = OltMerkModels.query.filter_by(merk=kwargs['merk'], model=id_exists.model).first()
+            if name_exists:
+                abort(409, 'Name Already Exists')
+
             id_exists.merk = kwargs['merk']
         
-        if 'model' in kwargs['model']:
+        if 'model' in kwargs:
+            if 'merk' in kwargs:
+                name_exists = OltMerkModels.query.filter_by(merk=kwargs['merk'], model=kwargs['model']).first()
+            else:
+                name_exists = OltMerkModels.query.filter_by(merk=id_exists.merk, model=kwargs['model']).first()
+            if name_exists:
+                abort(409, 'Name Already Exists')
             id_exists.model = kwargs['model']
         
         db.session.commit()
@@ -128,4 +141,88 @@ class OltMerkApi(MethodResource, Resource):
 
         abort(404, 'id not found')
 
-        
+
+class AvaiOltMerkSchema(Schema):
+    id = fields.Integer(required=True, metadata={"description":"id record merk"})
+
+class UpdateOltMerkSchema(Schema):
+    id = fields.Integer(required=True, metadata={"description":"id record merk"})
+    id_soft = fields.Integer(required=True, metadata={"description":"id record software"})
+
+from .oltsoft import ListOltSoftSchema
+from .models import OltSoftModels, OltMerkSoftModels
+class OltMerkSoftAvaiApi(MethodResource, Resource):
+    @doc(description='List software yang dapat menggunakan merk ini', tags=['OLT Master'], security=[{"ApiKeyAuth": []}])
+    @use_kwargs(AvaiOltMerkSchema, location=('json'))
+    @marshal_with(ListOltSoftSchema)
+    @auth.login_required(role=['api','noc','superadmin', 'teknisi'])
+    def post(self, **kwargs):
+        id_exists = OltMerkModels.query.filter_by(id=kwargs['id']).first()
+        if not id_exists:
+            abort(404, 'id not found')
+
+        data = id_exists.soft_avai()
+        return jsonify(data)
+    
+    @doc(description='Add software yang dapat menggunakan merk ini', tags=['OLT Master'], security=[{"ApiKeyAuth": []}])
+    @use_kwargs(UpdateOltMerkSchema, location=('json'))
+    @marshal_with(ListOltSoftSchema)
+    @auth.login_required(role=['api','noc','superadmin'])
+    def put(self, **kwargs):
+        id_exists = OltMerkModels.query.filter_by(id=kwargs['id']).first()
+        if not id_exists:
+            abort(404, 'id not found')
+
+        id_soft_exists = OltSoftModels.query.filter_by(id=kwargs['id_soft']).first()
+        if not id_soft_exists:
+            abort(404, 'id not found')
+
+        record_exists = OltMerkSoftModels.query.filter_by(id_merk=kwargs['id'], id_software=kwargs['id_soft']).first()
+        if record_exists:
+            abort(409, 'already exists')
+
+        new_record = OltMerkSoftModels(kwargs['id'], kwargs['id_soft'])
+        db.session.add(new_record)
+        db.session.commit()    
+
+        id_exists = OltMerkModels.query.filter_by(id=kwargs['id']).first()
+        data = id_exists.soft_avai()
+
+        operator = auth.current_user()
+        new_logging = MikoltLoggingModel(
+            operator.username, 
+            'oltmaster-merksoft', 
+            kwargs['id'], 
+            'created',
+            str(data)
+        )
+        db.session.add(new_logging)
+        db.session.commit()
+        return jsonify(data)
+    
+    @doc(description='Delete software yang dapat menggunakan merk ini', tags=['OLT Master'], security=[{"ApiKeyAuth": []}])
+    @use_kwargs(UpdateOltMerkSchema, location=('json'))
+    @marshal_with(ListOltSoftSchema)
+    @auth.login_required(role=['api','noc','superadmin'])
+    def delete(self, **kwargs):
+        record_exists = OltMerkSoftModels.query.filter_by(id_merk=kwargs['id'], id_software=kwargs['id_soft']).first()
+        if not record_exists:
+            abort(404, 'record not found')
+
+        db.session.delete(record_exists)
+        db.session.commit()
+
+        id_exists = OltMerkModels.query.filter_by(id=kwargs['id']).first()
+        data = id_exists.soft_avai()
+        operator = auth.current_user()
+        new_logging = MikoltLoggingModel(
+            operator.username, 
+            'oltmaster-merksoft', 
+            kwargs['id'], 
+            'deleted',
+            str(data)
+        )
+        db.session.add(new_logging)
+        db.session.commit()
+
+        return jsonify({'message':'success'})
