@@ -37,7 +37,7 @@ headers = lines[0].split()
 parsed_data = []
 
 # Iterate over the lines, starting from the third line (actual data)
-for line in lines[2:]:
+x = '''for line in lines[2:]:
     # Split each line into fields based on whitespace
     fields = line.split()
 
@@ -56,8 +56,8 @@ for line in lines[2:]:
     row['Status'] = fields[8] if len(fields) > 8 else ""
 
     # Append the row to the parsed_data list
-    parsed_data.append(row)
-
+    parsed_data.append(row)'''
+exec(x)
 # Output the parsed data
 print(parsed_data)
 
@@ -67,3 +67,21 @@ print(parsed_data)
 #show processor
 #show card slotno 4
 #reset-card slotno 4 (reboot card masih di cari lagi)
+
+# OLT-C320-ARENJAYA#reboot ?
+#   rackno   Specify rack number (default is main rack NO.)
+#   shelfno  Specify shelf number (default is main shelf NO.)
+#   <cr>
+# OLT-C320-ARENJAYA#reboot
+
+#show system-group
+# System Description: C320 Version V2.1.0 Software, Copyright (c) by ZTE Corporati
+# on Compiled
+# System ObjectId: .1.3.6.1.4.1.3902.1082.1001.320.2.1
+# Started before: 141 days, 14 hours, 52 minutes
+# Contact with: noc@wifian.id
+# System name:  OLT-C320-ARENJAYA
+# Location: Bekasi, Indonesia
+# System Info:  165  56d41deb
+# This system primarily offers a set of 78 services
+

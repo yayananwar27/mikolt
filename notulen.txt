@@ -53,3 +53,19 @@ https://wifian.smartolt.com/olt/add
 * Nama port saling sinkron antara aplikasi dan hardware
 
 Untuk SOP Redaman di wifian seperti apa?
+
+103.247.22.229:234
+yayan
+Yayan@12344
+
+
+OLT-C320-ARENJAYA#show system-group
+System Description: C320 Version V2.1.0 Software, Copyright (c) by ZTE Corporati
+on Compiled
+System ObjectId: .1.3.6.1.4.1.3902.1082.1001.320.2.1
+Started before: 141 days, 14 hours, 41 minutes
+Contact with: noc@wifian.id
+System name:  OLT-C320-ARENJAYA
+Location: Bekasi, Indonesia
+System Info:  165  56d41deb
+This system primarily offers a set of 78 services

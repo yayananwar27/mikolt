@@ -18,3 +18,4 @@ pyjwt
 requests
 Flask-APScheduler
 gunicorn
+pexpect
