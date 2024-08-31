@@ -47,7 +47,7 @@ class OltDeviceapi(MethodResource, Resource):
     @auth.login_required(role=['api', 'noc', 'superadmin'])
     def post(self, **kwargs):
         operator = auth.current_user()
-        name = kwargs['merk']
+        name = kwargs['name']
         
         name_exists = OltDevicesModels.query.filter_by(name=name).first()
         if name_exists:

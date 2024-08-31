@@ -29,7 +29,7 @@ class OltSoftApi(MethodResource, Resource):
     @auth.login_required(role=['api'])
     def post(self, **kwargs):
         operator = auth.current_user()
-        name = kwargs['merk']
+        name = kwargs['name']
         
         name_exists = OltSoftModels.query.filter_by(name=name).first()
         if name_exists:
