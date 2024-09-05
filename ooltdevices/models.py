@@ -16,6 +16,7 @@ class OltDevicesModels(db.Model):
     snmp_ro_com = db.Column(db.String(255), nullable=False)
     snmp_wr_com = db.Column(db.String(255), nullable=False)
     snmp_port = db.Column(db.Integer, nullable=False)
+    id_site = db.Column(db.Integer, nullable=False)
     id_merk = db.Column(db.Integer, db.ForeignKey('oltmerk.id', ondelete='CASCADE'), nullable=False)
     id_software = db.Column(db.Integer, db.ForeignKey('oltsoftware.id', ondelete='CASCADE'), nullable=False)
     def __init__(
@@ -28,6 +29,7 @@ class OltDevicesModels(db.Model):
             snmp_ro_com,
             snmp_wr_com,
             snmp_port,
+            id_site,
             id_merk,
             id_software
             ):
@@ -40,13 +42,20 @@ class OltDevicesModels(db.Model):
         self.snmp_ro_com = snmp_ro_com
         self.snmp_wr_com = snmp_wr_com
         self.snmp_port = snmp_port
+        self.id_site = id_site
         self.id_merk = id_merk
         self.id_software = id_software
 
     def to_dict(self):
         from ooltmaster.models import OltMerkModels, OltSoftModels
+        from sites.models import SitesModel
         info_merk = OltMerkModels.query.filter_by(id=self.id_merk).first()
         info_soft = OltSoftModels.query.filter_by(id=self.id_software).first()
+        info_site = SitesModel.query.filter_by(site_id=self.id_site).first()
+        try:
+            info_site = info_site.to_dict()
+        except:
+            info_site = None
         return {
             'id':self.id,
             'name':self.name,
@@ -57,17 +66,24 @@ class OltDevicesModels(db.Model):
             'snmp_ro_com':self.snmp_ro_com,
             'snmp_wr_com':self.snmp_wr_com,
             'snmp_port':self.snmp_port,
+            'id_site':self.id_site,
             'id_merk':self.id_merk,
             'id_software':self.id_software,
+            'info_site':info_site,
             'info_merk':info_merk.to_dict(),
             'info_software':info_soft.to_dict()
         }
     
     def to_dict_info(self):
         from ooltmaster.models import OltMerkModels, OltSoftModels
+        from sites.models import SitesModel
         info_merk = OltMerkModels.query.filter_by(id=self.id_merk).first()
         info_soft = OltSoftModels.query.filter_by(id=self.id_software).first()
-        
+        info_site = SitesModel.query.filter_by(site_id=self.id_site).first()
+        try:
+            info_site = info_site.to_dict()
+        except:
+            info_site = None
         return {
             'id':self.id,
             'name':self.name,
@@ -78,9 +94,11 @@ class OltDevicesModels(db.Model):
             'snmp_ro_com':self.snmp_ro_com,
             'snmp_wr_com':self.snmp_wr_com,
             'snmp_port':self.snmp_port,
+            'id_site':self.id_site,
             'id_merk':self.id_merk,
             'id_software':self.id_software,
             'uptime':self.oltdevice_uptime(),
+            'info_site':info_site,
             'info_merk':info_merk.to_dict(),
             'info_software':info_soft.to_dict()
         }
@@ -92,6 +110,7 @@ class OltDevicesModels(db.Model):
         ).first()
         output = None
         if script_python:
-            exec(script_python.script_python)
-
+            local_scope = {'self': self}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')   
         return output

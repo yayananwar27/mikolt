@@ -27,9 +27,9 @@ def insert_initial_data(*args, **kwargs):
     uptime_software_1 = OltCommandsUptimeModel(
         id_software=1, 
         script_python='''
-import pexpect
-import re
 def telnet_to_olt(host, username, password, command, port):
+    import pexpect
+    import re
     try:
         tn = pexpect.spawn(f'telnet {host} {port}')
         tn.expect('Username:', timeout=10)
@@ -40,6 +40,7 @@ def telnet_to_olt(host, username, password, command, port):
         tn.sendline(command)
         tn.expect('#', timeout=10)
         output = tn.before.decode('ascii')
+        
         tn.sendline('exit')
         pattern = r"Started before:\s+(\d+ days, \d+ hours, \d+ minutes)"
         match = re.search(pattern, output.strip())
@@ -48,6 +49,7 @@ def telnet_to_olt(host, username, password, command, port):
             started_before = match.group(1)
         else:
             started_before = None
+        
         return started_before
     
     except pexpect.TIMEOUT:
@@ -62,9 +64,8 @@ host = self.host
 username = self.telnet_user
 password = self.telnet_pass
 command = "show system-group"
-port = 234
+port = self.telnet_port
 output = telnet_to_olt(host, username, password, command, port)
-
         '''
     )
     db.session.add(uptime_software_1)

@@ -8,6 +8,8 @@ from accessapp.authapp import auth
 
 from .models import db, OltDevicesModels
 from logmikolt.model import MikoltLoggingModel
+from sites.models import SitesModel
+from userlogin.models import AllowedSiteUserModel
 
 class CreateOltDeviceSchema(Schema):
     name = fields.String(required=True, metadata={"description":"Name OLT"})
@@ -18,6 +20,7 @@ class CreateOltDeviceSchema(Schema):
     snmp_ro_com = fields.String(required=True, metadata={"description":"SNMP RO Community OLT"})
     snmp_wr_com = fields.String(required=True, metadata={"description":"SNMP RW Community OLT"})
     snmp_port = fields.Integer(required=True, metadata={"description":"SNMP PORT"})
+    id_site = fields.Integer(required=True, metadata={"description":"id site"})
     id_merk = fields.Integer(required=True, metadata={"description":"id merk"})
     id_software = fields.Integer(required=True, metadata={"description":"id software"})
 
@@ -31,6 +34,7 @@ class OltDeviceSchema(Schema):
     snmp_ro_com = fields.String(required=True, metadata={"description":"SNMP RO Community OLT"})
     snmp_wr_com = fields.String(required=True, metadata={"description":"SNMP RW Community OLT"})
     snmp_port = fields.Integer(required=True, metadata={"description":"SNMP PORT"})
+    id_site = fields.Integer(required=True, metadata={"description":"id site"})
     id_merk = fields.Integer(required=True, metadata={"description":"id merk"})
     id_software = fields.Integer(required=True, metadata={"description":"id software"})
 
@@ -53,6 +57,10 @@ class OltDeviceapi(MethodResource, Resource):
         if name_exists:
             abort(409, 'Name Already Exists')
 
+        id_site_exists = SitesModel.query.filter_by(site_id=kwargs['id_site']).first()
+        if not id_site_exists:
+            abort(400, 'id site not found')
+
         new_name = OltDevicesModels(
             name, 
             kwargs['host'], 
@@ -62,6 +70,7 @@ class OltDeviceapi(MethodResource, Resource):
             kwargs['snmp_ro_com'],
             kwargs['snmp_wr_com'],
             kwargs['snmp_port'],
+            kwargs['id_site'],
             kwargs['id_merk'],
             kwargs['id_software']
         )
@@ -89,7 +98,18 @@ class OltDeviceapi(MethodResource, Resource):
     def get(self):
         operator = auth.current_user()
         data = []
-        all_record = OltDevicesModels.query.order_by(OltDevicesModels.name.asc()).all()
+
+        if operator.role in ['teknisi']:
+            allowed_site = AllowedSiteUserModel.query.filter_by(username=operator.username).all()
+            list_allowed = []
+            for _allowed in allowed_site:
+                list_allowed.append(_allowed.site_id)
+            all_record = OltDevicesModels.query.filter(
+                OltDevicesModels.id_site.in_(list_allowed)
+            ).order_by(OltDevicesModels.name.asc()).all()
+        
+        else:
+            all_record = OltDevicesModels.query.order_by(OltDevicesModels.name.asc()).all()
         if all_record:
             for record in all_record:
                 if operator.role in ['teknisi']:
@@ -126,6 +146,7 @@ class OltDeviceapi(MethodResource, Resource):
         id_exists.snmp_ro_com = kwargs['snmp_ro_com']
         id_exists.snmp_wr_com = kwargs['snmp_wr_com']
         id_exists.snmp_port = kwargs['snmp_port']
+        id_exists.id_site = kwargs['id_site']
         id_exists.id_merk = kwargs['id_merk']
         id_exists.id_software = kwargs['id_software']
 
@@ -173,13 +194,23 @@ class OltDeviceapi(MethodResource, Resource):
 class InfoOltDeviceapi(MethodResource, Resource):
     @doc(description='Info Olt Device', tags=['OLT Device'], security=[{"ApiKeyAuth": []}])
     @use_kwargs(DeleteOltDeviceSchema, location=('json'))
-    @marshal_with(OltDeviceSchema)
+    #@marshal_with(OltDeviceSchema)
     @auth.login_required(role=['api', 'noc', 'superadmin', 'teknisi'])
     def post(self, **kwargs):
         operator = auth.current_user()
         id = kwargs['id']
         data = None
-        found_record = OltDevicesModels.query.filter_by(id=id).first()
+
+        if operator.role in ['teknisi']:
+            allowed_site = AllowedSiteUserModel.query.filter_by(username=operator.username).all()
+            list_allowed = []
+            for _allowed in allowed_site:
+                list_allowed.append(_allowed.site_id)
+            found_record = OltDevicesModels.query.filter(
+                OltDevicesModels.id_site.in_(list_allowed)
+            ).order_by(OltDevicesModels.name.asc()).first()
+        else:
+            found_record = OltDevicesModels.query.filter_by(id=id).first()
         if found_record:
             if operator.role in ['teknisi']:
                 data = found_record.to_dict_info()
@@ -191,5 +222,4 @@ class InfoOltDeviceapi(MethodResource, Resource):
                 data['snmp_port'] = None
             else:
                 data = found_record.to_dict_info()
-
         return data
