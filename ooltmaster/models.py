@@ -1,4 +1,4 @@
-from config import db
+from config import db, event
 
 def init_db(app):
     with app.app_context():
@@ -41,6 +41,8 @@ class OltSoftModels(db.Model):
     name = db.Column(db.String(255), unique=True, nullable=False)
     oltsoftmerk_fk = db.relationship('OltMerkSoftModels', backref='oltsoftware', cascade="all, delete", passive_deletes=True, lazy=True)
     oltsoftdevice_fk = db.relationship('OltDevicesModels', backref='oltsoftware_device', cascade="all, delete", passive_deletes=True, lazy=True)
+    oltsoftdeviceuptime_fk = db.relationship('OltCommandsUptimeModel', backref='oltsoftware_device_uptime', cascade="all, delete", passive_deletes=True, lazy=True)
+
     def __init__(self, name):
         self.name = name
 
@@ -75,3 +77,11 @@ class OltMerkSoftModels(db.Model):
             'id_merk':self.id_merk,
             'id_software':self.id_software
         }
+
+
+def insert_initial_software(*args, **kwargs):
+    software_1 = OltSoftModels('V2.1.x')
+    db.session.add(software_1)
+    db.session.commit()
+
+event.listen(OltSoftModels.__table__, 'after_create', insert_initial_software)

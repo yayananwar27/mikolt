@@ -87,11 +87,22 @@ class OltDeviceapi(MethodResource, Resource):
     @marshal_with(ListOltDeviceSchema)
     @auth.login_required(role=['api','noc', 'superadmin', 'teknisi'])
     def get(self):
+        operator = auth.current_user()
         data = []
         all_record = OltDevicesModels.query.order_by(OltDevicesModels.name.asc()).all()
         if all_record:
             for record in all_record:
-                data.append(record.to_dict())
+                if operator.role in ['teknisi']:
+                    _record = record.to_dict()
+                    _record['telnet_user'] = None
+                    _record['telnet_pass'] = None
+                    _record['telnet_port'] = None
+                    _record['snmp_ro_com'] = None
+                    _record['snmp_wr_com'] = None
+                    _record['snmp_port'] = None
+                    data.append(_record)
+                else:
+                    data.append(record.to_dict())
 
         return jsonify(data)
     
@@ -157,3 +168,28 @@ class OltDeviceapi(MethodResource, Resource):
 
         abort(404, 'id not found')
 
+
+
+class InfoOltDeviceapi(MethodResource, Resource):
+    @doc(description='Info Olt Device', tags=['OLT Device'], security=[{"ApiKeyAuth": []}])
+    @use_kwargs(DeleteOltDeviceSchema, location=('json'))
+    @marshal_with(OltDeviceSchema)
+    @auth.login_required(role=['api', 'noc', 'superadmin', 'teknisi'])
+    def post(self, **kwargs):
+        operator = auth.current_user()
+        id = kwargs['id']
+        data = None
+        found_record = OltDevicesModels.query.filter_by(id=id).first()
+        if found_record:
+            if operator.role in ['teknisi']:
+                data = found_record.to_dict_info()
+                data['telnet_user'] = None
+                data['telnet_pass'] = None
+                data['telnet_port'] = None
+                data['snmp_ro_com'] = None
+                data['snmp_wr_com'] = None
+                data['snmp_port'] = None
+            else:
+                data = found_record.to_dict_info()
+
+        return data

@@ -1,5 +1,5 @@
 import pexpect
-
+import re
 def telnet_to_olt(host, username, password, command, port):
     try:
         # Mulai koneksi Telnet
@@ -7,9 +7,9 @@ def telnet_to_olt(host, username, password, command, port):
         
         # Tangkap dan cetak output awal sebelum prompt login
         tn.expect('Username:', timeout=10)
-        initial_output = tn.before.decode('ascii')
-        print("Initial Output:")
-        print(initial_output)
+        #initial_output = tn.before.decode('ascii')
+        #print("Initial Output:")
+        #print(initial_output)
         
         # Kirim username
         tn.sendline(username)
@@ -28,8 +28,15 @@ def telnet_to_olt(host, username, password, command, port):
         
         # Akhiri sesi Telnet
         tn.sendline('exit')
-        
-        return output.strip()
+        pattern = r"Started before:\s+(\d+ days, \d+ hours, \d+ minutes)"
+        match = re.search(pattern, output.strip())
+
+        if match:
+            started_before = match.group(1)
+        else:
+            started_before = None
+
+        return started_before
     
     except pexpect.TIMEOUT:
         return "Error: Connection timed out."

@@ -7,6 +7,7 @@ from apispec.ext.marshmallow import MarshmallowPlugin
 from apispec_webframeworks.flask import FlaskPlugin
 
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import event
 db = SQLAlchemy()
 
 # from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
