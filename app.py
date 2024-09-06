@@ -38,7 +38,9 @@ from ospeedprofile.models import init_db as init_db_speedprofile
 from oonutypes.models import init_db as init_db_onutypes
 from ooltmaster.models import init_db as init_db_oltmaster
 from ooltdevices.models import init_db as init_db_oltdevices
+
 from ooltcommands.models_uptime import init_db as init_db_oltcommand_uptime
+from ooltcommands.models_showcard import init_db as init_db_oltcommand_showcard
 
 
 scheduler.init_app(app)
@@ -53,7 +55,9 @@ init_db_speedprofile(app)
 init_db_onutypes(app)
 init_db_oltmaster(app)
 init_db_oltdevices(app)
+
 init_db_oltcommand_uptime(app)
+init_db_oltcommand_showcard(app)
 
 # Middleware to log the request processing time
 @app.before_request

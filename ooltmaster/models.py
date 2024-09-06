@@ -42,6 +42,8 @@ class OltSoftModels(db.Model):
     oltsoftmerk_fk = db.relationship('OltMerkSoftModels', backref='oltsoftware', cascade="all, delete", passive_deletes=True, lazy=True)
     oltsoftdevice_fk = db.relationship('OltDevicesModels', backref='oltsoftware_device', cascade="all, delete", passive_deletes=True, lazy=True)
     oltsoftdeviceuptime_fk = db.relationship('OltCommandsUptimeModel', backref='oltsoftware_device_uptime', cascade="all, delete", passive_deletes=True, lazy=True)
+    oltsoftdeviceshowcard_fk = db.relationship('OltCommandsShowCardModel', backref='oltsoftware_device_showcard', cascade="all, delete", passive_deletes=True, lazy=True)
+
 
     def __init__(self, name):
         self.name = name

@@ -1,0 +1,105 @@
+interface gpon-olt_1/1/1
+  onu 29 type ALL-ONT sn ZTEGCC576EF4
+!
+interface gpon-onu_1/1/1:29
+  name YOGA DATOR PUTRA
+  description zone_Zone_1_descr_2_YOGA_DATOR_PUTRA_05272_
+  tcont 1 profile server
+  gemport 1 tcont 1
+  gemport 1 traffic-limit downstream SMARTOLT-1G-DOWN
+  service-port 1 vport 1 user-vlan 304 vlan 304
+!
+pon-onu-mng gpon-onu_1/1/1:29
+  flow mode 1 tag-filter vlan-filter untag-filter discard
+  flow 1 pri 0 vlan 304
+  gemport 1 flow 1
+  switchport-bind switch_0/1 iphost 1
+  switchport-bind switch_0/1 veip 1
+  pppoe 1 nat enable user 816805272@bks.wifian.net.id password berhasil
+  vlan-filter-mode iphost 1 tag-filter vlan-filter untag-filter discard
+  vlan-filter iphost 1 pri 0 vlan 304
+  dhcp-ip ethuni eth_0/1 from-onu
+  dhcp-ip ethuni eth_0/2 from-onu
+  dhcp-ip ethuni eth_0/3 from-onu
+  dhcp-ip ethuni eth_0/4 from-onu
+  security-mgmt 998 state enable mode forward ingress-type lan protocol web https
+  security-mgmt 999 state enable ingress-type lan protocol ftp telnet ssh snmp tr069
+
+
+
+  
+
+OLT-C320-ARENJAYA#show onu running config ?
+  gpon-onu_1/1  Gpon-onu interface
+  gpon-onu_1/2  Gpon-onu interface
+OLT-C320-ARENJAYA#show onu running config gpp
+                                          ^
+%Error 20202: Invalid input detected at '^' marker.Invalid parameter
+OLT-C320-ARENJAYA#show onu running config gpo
+OLT-C320-ARENJAYA#show onu running config gpon-onu_1/1/1:29
+pon-onu-mng gpon-onu_1/1/1:29
+  flow mode 1 tag-filter vlan-filter untag-filter discard
+  flow 1 pri 0 vlan 304
+  gemport 1 flow 1
+  switchport-bind switch_0/1 iphost 1
+  switchport-bind switch_0/1 veip 1
+  pppoe 1 nat enable user 816805272@bks.wifian.net.id password berhasil
+  vlan-filter-mode iphost 1 tag-filter vlan-filter untag-filter discard
+  vlan-filter iphost 1 pri 0 vlan 304
+  dhcp-ip ethuni eth_0/1 from-onu
+  dhcp-ip ethuni eth_0/2 from-onu
+  dhcp-ip ethuni eth_0/3 from-onu
+  dhcp-ip ethuni eth_0/4 from-onu
+  security-mgmt 998 state enable mode forward ingress-type lan protocol web http
+s
+  security-mgmt 999 state enable ingress-type lan protocol ftp telnet ssh snmp t
+r069
+!
+OLT-C320-ARENJAYA#show onu running config gpon-onu_1/1/11
+                                          ^
+%Error 20202: Invalid input detected at '^' marker.Invalid parameter
+OLT-C320-ARENJAYA#show onu running config gpon-onu_1/1/1:1
+pon-onu-mng gpon-onu_1/1/1:1
+  service PPP gemport 1 vlan 304
+  service HS gemport 2 vlan 305
+  wan-ip 1 mode pppoe username 816815857@bks.wifian.net.id password berhasil vla
+n-profile PPPOE304 host 1
+  wan-ip 1 ping-response enable traceroute-response enable
+  vlan port wifi_0/2 mode hybrid def-vlan 305
+  security-mgmt 212 state enable mode forward protocol web
+  ssid auth wep wifi_0/2 open-system
+  ssid ctrl wifi_0/2 name WIFIAN hide enable
+!
+OLT-C320
+
+
+OLT-C320-ARENJAYA#show running-config interface gpon-onu_1/1/1:29
+Building configuration...
+interface gpon-onu_1/1/1:29
+  name YOGA DATOR PUTRA
+  description zone_Zone_1_descr_2_YOGA_DATOR_PUTRA_05272_
+  tcont 1 profile server
+  gemport 1 tcont 1
+  gemport 1 traffic-limit downstream SMARTOLT-1G-DOWN
+  service-port 1 vport 1 user-vlan 304 vlan 304
+!
+end
+OLT-C320-ARENJAYA#show onu running config gpon-onu_1/1/1:29
+pon-onu-mng gpon-onu_1/1/1:29
+  flow mode 1 tag-filter vlan-filter untag-filter discard
+  flow 1 pri 0 vlan 304
+  gemport 1 flow 1
+  switchport-bind switch_0/1 iphost 1
+  switchport-bind switch_0/1 veip 1
+  pppoe 1 nat enable user 816805272@bks.wifian.net.id password berhasil
+  vlan-filter-mode iphost 1 tag-filter vlan-filter untag-filter discard
+  vlan-filter iphost 1 pri 0 vlan 304
+  dhcp-ip ethuni eth_0/1 from-onu
+  dhcp-ip ethuni eth_0/2 from-onu
+  dhcp-ip ethuni eth_0/3 from-onu
+  dhcp-ip ethuni eth_0/4 from-onu
+  security-mgmt 998 state enable mode forward ingress-type lan protocol web http
+s
+  security-mgmt 999 state enable ingress-type lan protocol ftp telnet ssh snmp t
+r069
+!

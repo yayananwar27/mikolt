@@ -1,0 +1,74 @@
+OLT-C320-ARENJAYA(config)#add-card slotno 1 ?
+  ACWKC  48Port ADSL2+ Over POTS Line Card.
+  ACWVC  64Port ADSL2+ Over POTS Line Card.
+  AMWVF  64port ADSL2+ with MELT Over POTS Line Card.
+  ANWVF  64port ADSL2+ Over ISDN Line Card.
+  APWVF  64port ADSL2+ Over POTS Line Card.
+  ASWVC  64port ADSL2+ Over POTS Line Card.
+  ASWVD  64Port ADSL2+ Over POTS Line Card.
+  DBWD   16-port ISDN BRI Line Card.
+  DEWB   16-port ISDN BRI Line Card.
+  DEWU   16-port ISDN BRI Line Card.
+  DSWB   16-port E1 Shdsl Balance Interface Card.
+  DSWC   16-port E1 Shdsl Emulate Balance Interface Card.
+  DSWD   16-port E1 shdsl Balance Interface Card.
+  DSWU   16-port E1 shdsl Balance Interface Card.
+  ETGH   16 ports EPON OLT line card.
+  ETGO   8 ports EPON OLT line card.
+  ETTH   16 ports 10G-EPON OLT line card.
+  ETTO   8 ports 10G-EPON OLT line card.
+  ETTQ   4-port 10G EPON PON card.
+  ETXD   2 ports Asymmetric 10G EPON OLT line card.
+  FTGH   16 ports GE P2P Ethernet interface card.
+  FTGK   24/48 ports  Ethernet interface  card
+  FTGKN  24/48 ports  ethernet interface  card.
+  GDFO   8 ports ethernet interface card.
+  GDFOU  8-ports GE PTP Ethernet interface card.
+  GTBH   16 ports XG-PON/GPON  Combo OLT line card.
+  GTBO   8 ports XG-PON/GPON combo OLT line card.
+  GTCH   16 ports XGS-PON/GPON  Combo OLT line card.
+  GTCO   8 ports XGS-PON/GPON combo OLT line card.
+  GTGH   16 ports GPON OLT line card.
+  GTGO   8 ports GPON OLT line card.
+  GTGOF   8-port GPON OLT line card.
+  GTGQ   4 ports GPON OLT line card.
+  GTHQ   4-port GPON 4-port XG-PON OLT line card.
+  GTTH   16 ports 10G-GPON OLT line card.
+  GTTO   8 ports 10G-GPON OLT line card.
+  GTXD   2 ports XG-PON OLT line card.
+  GTXH   16 ports XG-PON OLT line card.
+  GTXO   8 ports XG-PON OLT line card.
+  GTXQ   4 ports XG-PON OLT line card.
+  GTXT   8*XG-PON+2*GPON OLT line card.
+  HDTTU  2*10G+8*GE ethernet interface Card.
+  OASVA  WDM-PON card.
+  PMFT   PON  Module Function Test Board.
+  PTWKB  48-ports POTS Line Card.
+  PTWVA  64-ports POTS Line Card.
+  PTWVB  64-ports POTS Line Card.
+  PTWVC  64-ports POTS Line Card.
+  PTWVN  64-ports POTS Line Card.
+  RTD    Multiple Service Card.
+  RTDU   Virtual Router Gateway Ethernet interface card.
+  SLWGF  32 ports SHDSL Over POTS Line Card.
+  SMWGF  32 ports SHDSL Over POTS Line Card.
+  SSWGF  32 ports SHDSL Over POTS Line Card.
+  TRWGB  32-PORT Analog Trunk  Line Card-type B.
+  VCWKC  48-ports VDSL2 Line Card.
+  VDWVD  64-ports VDSL2 Line Card.
+  VEWKC  48-port VDSL2 35B Line Card with MELTand G.Vector - type C
+  VGWVD  64-port VDSL2 Line Card with G.Vector and MELT.
+  VGWVS  64-port VDSL2 Line Card with G.Vector and MELT.
+  VHWKC  48-port VDSL2 with G.Vector Line Card
+  VHWV   64-port VDSL2 Line Card with G.Vector and MELT.
+  VIWVC  64 ports VDSL2 over ISDN Line Card
+  VMWGC  32 ports VDSL2 Line Card
+  VMWKC  48-port VDSL2 Line Card.
+  VMWKS  48-port VDSL2 Line Card.
+  VMWVC  64 ports VDSL2 Line Card.
+  VMWVS  64 ports VDSL2 Line Card
+  VPWV   64 ports VDSL2-C Line Card
+  XDTO   8 ports 10GE Ethernet interface card.
+
+
+

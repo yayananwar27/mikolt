@@ -19,6 +19,8 @@ class OltDevicesModels(db.Model):
     id_site = db.Column(db.Integer, nullable=False)
     id_merk = db.Column(db.Integer, db.ForeignKey('oltmerk.id', ondelete='CASCADE'), nullable=False)
     id_software = db.Column(db.Integer, db.ForeignKey('oltsoftware.id', ondelete='CASCADE'), nullable=False)
+    oltdevicecard_fk = db.relationship('OltDevicesCardModels', backref='oltdevicecards', cascade="all, delete", passive_deletes=True, lazy=True)
+    
     def __init__(
             self, 
             name, 
@@ -114,3 +116,54 @@ class OltDevicesModels(db.Model):
             exec(script_python.script_python, {}, local_scope)
             output = local_scope.get('output')   
         return output
+
+    def oltdevice_showcard(self):
+        from ooltcommands.models_showcard import OltCommandsShowCardModel
+        script_python = OltCommandsShowCardModel.query.filter_by(
+            id_software = self.id_software
+        ).first()
+        output = None
+        if script_python:
+            local_scope = {'self': self}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')   
+        return output
+
+
+
+class OltDevicesCardModels(db.Model):
+    __tablename__ = 'oltdevicecards'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_device = db.Column(db.Integer, db.ForeignKey('oltdevices.id', ondelete='CASCADE'), nullable=False)
+    shelf = db.Column(db.integer, nullable=False)
+    slot = db.Column(db.integer, nullable=False)
+    jml_port = db.Column(db.integer, nullable=False)
+    soft_ver = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(255), nullable=False)
+    type_port = db.Column(db.integer, nullable=False) #1=GPON CARD,  2=Uplink Card
+    last_update = soft_ver = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, id_device, shelf_number, slot_number, jml_port, soft_ver, status, type_port, last_update):
+        self.id_device = id_device
+        self.shelf = shelf_number
+        self.slot = slot_number
+        self.jml_port = jml_port
+        self.soft_ver = soft_ver
+        self.status = status
+        self.type_port = type_port
+        self.last_update = last_update
+
+    def to_dict(self):
+        return {
+            'id':self.id,
+            'id_device':self.id_device,
+            'shelf':self.shelf,
+            'slot':self.slot,
+            'jml_port':self.jml_port,
+            'soft_ver':self.soft_ver,
+            'status':self.status,
+            'type_port':self.type_port,
+            'last_update':str(self.last_update)
+        }
+    
+    
