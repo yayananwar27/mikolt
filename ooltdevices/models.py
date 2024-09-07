@@ -124,6 +124,7 @@ class OltDevicesModels(db.Model):
         ).first()
         output = None
         if script_python:
+            print(script_python.script_python)
             local_scope = {'self': self}
             exec(script_python.script_python, {}, local_scope)
             output = local_scope.get('output')   
@@ -135,18 +136,20 @@ class OltDevicesCardModels(db.Model):
     __tablename__ = 'oltdevicecards'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_device = db.Column(db.Integer, db.ForeignKey('oltdevices.id', ondelete='CASCADE'), nullable=False)
-    shelf = db.Column(db.integer, nullable=False)
-    slot = db.Column(db.integer, nullable=False)
-    jml_port = db.Column(db.integer, nullable=False)
+    frame = db.Column(db.Integer, nullable=False)
+    slot = db.Column(db.Integer, nullable=False)
+    jml_port = db.Column(db.Integer, nullable=False)
+    cfg_type = db.Column(db.String(255), nullable=False)
     soft_ver = db.Column(db.String(255), nullable=False)
     status = db.Column(db.String(255), nullable=False)
-    type_port = db.Column(db.integer, nullable=False) #1=GPON CARD,  2=Uplink Card
-    last_update = soft_ver = db.Column(db.DateTime, nullable=False)
+    type_port = db.Column(db.Integer, nullable=False) #1=GPON CARD,  2=Uplink Card
+    last_update = db.Column(db.DateTime, nullable=False)
 
-    def __init__(self, id_device, shelf_number, slot_number, jml_port, soft_ver, status, type_port, last_update):
+    def __init__(self, id_device, frame_number, slot_number, jml_port, cfg_type, soft_ver, status, type_port, last_update):
         self.id_device = id_device
-        self.shelf = shelf_number
+        self.frame = frame_number
         self.slot = slot_number
+        self.cfg_type = cfg_type
         self.jml_port = jml_port
         self.soft_ver = soft_ver
         self.status = status
@@ -157,8 +160,9 @@ class OltDevicesCardModels(db.Model):
         return {
             'id':self.id,
             'id_device':self.id_device,
-            'shelf':self.shelf,
+            'frame':self.frame,
             'slot':self.slot,
+            'cfg_type':self.cfg_type,
             'jml_port':self.jml_port,
             'soft_ver':self.soft_ver,
             'status':self.status,

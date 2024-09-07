@@ -42,22 +42,26 @@ def telnet_to_olt(host, username, password, command, port):
         output = tn.before.decode('ascii')
         
         tn.sendline('exit')
-        lines = output.strip().split("\n")
-        headers = lines[0].split()
+        lines = output.strip().split('\\n')
+        headers = lines[1].split()
         parsed_data = []
-        
-        for line in lines[2:]:
+        for line in lines[3:-1]:
             fields = line.split()
-            row = {}
-            #row['Rack'] = fields[0]
-            row['Shelf'] = fields[1]
-            row['Slot'] = fields[2]
-            row['CfgType'] = fields[3]
-            #row['RealType'] = fields[4] if len(fields) > 4 else ""
-            row['Port'] = fields[5] if len(fields) > 5 else ""
-            #row['HardVer'] = fields[6] if len(fields) > 6 else ""
-            row['SoftVer'] = fields[7] if len(fields) > 7 else ""
-            row['Status'] = fields[8] if len(fields) > 8 else ""
+            while len(fields) < 9:
+                if len(fields) < 7:
+                    fields.insert(-2, '')    
+                fields.insert(-1, '')
+            row = {
+                'Rack': fields[0],
+                'Frame': fields[1],
+                'Slot': fields[2],
+                'CfgType': fields[3],
+                'RealType': fields[4],
+                'Port': fields[5],
+                'HardVer': fields[6],
+                'SoftVer': fields[7],
+                'Status': fields[8]
+            }
             parsed_data.append(row)
 
         return parsed_data
