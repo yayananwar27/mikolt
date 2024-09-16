@@ -124,7 +124,7 @@ class OltDevicesModels(db.Model):
         ).first()
         output = None
         if script_python:
-            print(script_python.script_python)
+            #print(script_python.script_python)
             local_scope = {'self': self}
             exec(script_python.script_python, {}, local_scope)
             output = local_scope.get('output')   

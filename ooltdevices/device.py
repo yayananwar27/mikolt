@@ -6,10 +6,16 @@ from flask import jsonify, current_app, request, abort
 
 from accessapp.authapp import auth
 
-from .models import db, OltDevicesModels
+from .models import db, OltDevicesModels, OltDevicesCardModels
 from logmikolt.model import MikoltLoggingModel
 from sites.models import SitesModel
 from userlogin.models import AllowedSiteUserModel
+
+from datetime import datetime
+def created_time():
+    dt_now = datetime.now()
+    date = dt_now.strftime("%Y-%m-%d %H:%M:%S")
+    return str(date)
 
 class CreateOltDeviceSchema(Schema):
     name = fields.String(required=True, metadata={"description":"Name OLT"})
@@ -84,6 +90,24 @@ class OltDeviceapi(MethodResource, Resource):
             )
         db.session.add(new_logging)
         db.session.commit()
+
+        #OLT cards
+        card_list = new_name.oltdevice_showcard()
+        for card in card_list:    
+            new_card = OltDevicesCardModels(
+                id,
+                card['Frame'],
+                card['Slot'],
+                card['Slot'],
+                card['CfgType'],
+                card['SoftVer'],
+                card['Status'],
+                card['type_port'],
+                created_time()
+            )
+            db.session.add(new_card)
+            db.session.commit()
+
 
         msg = {'message':'success',
                'data':new_name.to_dict()
@@ -173,6 +197,12 @@ class OltDeviceapi(MethodResource, Resource):
 
         id_exists = OltDevicesModels.query.filter_by(id=id).first()
         if id_exists:
+            #delete card 
+            list_card = OltDevicesCardModels.query.filter_by(id_device=id).all()
+            for card in list_card:
+                db.session.delete(card)
+                db.session.commit()
+
             data = id_exists.to_dict()
             db.session.delete(id_exists)
             db.session.commit()

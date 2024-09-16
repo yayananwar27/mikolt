@@ -77,18 +77,13 @@ class OltDeviceCardapi(MethodResource, Resource):
                     exists_card.jml_port = card['Port']
                     exists_card.soft_ver = card['SoftVer']
                     exists_card.status = card['Status']
-                    if 'GT' in card['CfgType']:
-                        exists_card.type_port = 1
-                    else:
-                        exists_card.type_port = 2
+                    exists_card.type_port = card['type_port']
+                    
                     exists_card.last_update = created_time()
 
                     db.session.commit()
                 else:
-                    if 'GT' in card['CfgType']:
-                        type_port = 1
-                    else:
-                        type_port = 2
+                    
                     new_card = OltDevicesCardModels(
                         id,
                         card['Frame'],
@@ -97,7 +92,7 @@ class OltDeviceCardapi(MethodResource, Resource):
                         card['CfgType'],
                         card['SoftVer'],
                         card['Status'],
-                        type_port,
+                        card['type_port'],
                         created_time()
                     )
                     db.session.add(new_card)

@@ -62,6 +62,11 @@ def telnet_to_olt(host, username, password, command, port):
                 'SoftVer': fields[7],
                 'Status': fields[8]
             }
+            if 'GT' in row['CfgType']:
+                row['type_port'] = 1
+            else:
+                row['type_port'] = 2
+
             parsed_data.append(row)
 
         return parsed_data

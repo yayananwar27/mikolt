@@ -23,7 +23,7 @@ class OnuTypesModel(db.Model):
     def __init__(
             self, 
             name, 
-            pon_type, 
+            pon_type='gpon', 
             description=None, 
             max_tcont=40, 
             max_gemport=200,
