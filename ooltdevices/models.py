@@ -4,6 +4,11 @@ def init_db(app):
     with app.app_context():
         db.create_all()
 
+from datetime import datetime
+def created_time():
+    dt_now = datetime.now()
+    date = dt_now.strftime("%Y-%m-%d %H:%M:%S")
+    return str(date)
 
 class OltDevicesModels(db.Model):
     __tablename__ = 'oltdevices'
@@ -129,8 +134,68 @@ class OltDevicesModels(db.Model):
             exec(script_python.script_python, {}, local_scope)
             output = local_scope.get('output')   
         return output
+    
+    def oltdevice_showcardpon(self, frame, slot, pon):
+        from ooltcommands.models_showcardpon import OltCommandsPonInfoModel
+        script_python = OltCommandsPonInfoModel.query.filter_by(
+            id_software = self.id_software
+        ).first()
+        output = None
+        if script_python:
+            local_scope = {'self': self,'frame':frame,'slot':slot,'pon':pon}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')   
+        return output
+    
+    #add addan
+    def add_list_card(self):
+        card_list = self.oltdevice_showcard()
+        for card in card_list:    
+            new_card = OltDevicesCardModels(
+                id,
+                card['Frame'],
+                card['Slot'],
+                card['Slot'],
+                card['CfgType'],
+                card['SoftVer'],
+                card['Status'],
+                card['type_port'],
+                created_time()
+            )
+            db.session.add(new_card)
+            db.session.commit()
+            new_card.add_list_cardpon()
 
 
+    #show showann
+    def show_list_card(self):
+        data = []
+        list_card = OltDevicesCardModels.query.filter_by(id_device=self.id).order_by(
+            OltDevicesCardModels.type_port.asc()
+        ).all()
+        for card in list_card:
+            data.append(card.to_dict())
+
+        return data
+    
+    def show_list_portpon(self):
+        data = []
+        list_card = OltDevicesCardModels.query.filter_by(id_device=self.id).order_by(
+            OltDevicesCardModels.type_port.asc()
+        ).all()
+        
+        for card in list_card:
+            data.append(card.pon_info())
+        
+        return data
+
+    #delete deletan
+    def delete_list_card(self):
+        list_card = OltDevicesCardModels.query.filter_by(id_device=id).all()
+        for card in list_card:
+            card.delete_list_pon()
+            db.session.delete(card)
+            db.session.commit()
 
 class OltDevicesCardModels(db.Model):
     __tablename__ = 'oltdevicecards'
@@ -144,6 +209,8 @@ class OltDevicesCardModels(db.Model):
     status = db.Column(db.String(255), nullable=False)
     type_port = db.Column(db.Integer, nullable=False) #1=GPON CARD,  2=Uplink Card
     last_update = db.Column(db.DateTime, nullable=False)
+    oltcardpon_fk = db.relationship('OltDevicesCardPonModels', backref='oltcardpons', cascade="all, delete", passive_deletes=True, lazy=True)
+    
 
     def __init__(self, id_device, frame_number, slot_number, jml_port, cfg_type, soft_ver, status, type_port, last_update):
         self.id_device = id_device
@@ -170,4 +237,72 @@ class OltDevicesCardModels(db.Model):
             'last_update':str(self.last_update)
         }
     
+    def pon_info(self):
+        data = {
+            'id':self.id,
+            'slot':self.slot,
+            'type':self.cfg_type,
+        }
+        list_port = []
+        if self.type_port == 1:
+            list_ports = OltDevicesCardPonModels.query.filter_by(id_card=self.id).all()
+            for port in list_ports:
+                list_port.append(port.to_dict())
+
+        data['list_port'] = list_port    
+        return data
     
+    #add addan
+    def add_list_cardpon(self):
+        oltdevice = OltDevicesModels.query.filter_by(id=self.id_device).first()
+        if self.type_port == 1:
+            for num_port in range(self.jml_port):
+                output = oltdevice.oltdevice_showcardpon(self.frame, self.slot, num_port)
+
+                new_pon = OltDevicesCardPonModels(
+                    self.id,
+                    output.pon,
+                    output.state,
+                    output.status,
+                    output.description
+                )
+                db.session.add(new_pon)
+                db.session.commit()
+
+    #deletetan
+    def delete_list_pon(self):
+        list_card = OltDevicesCardPonModels.query.filter_by(id_card=self.id).all()
+        for card in list_card:
+            db.session.delete(card)
+            db.session.commit()
+
+class OltDevicesCardPonModels(db.Model):
+    __tablename__ = 'oltdevicecardpons'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_card = db.Column(db.Integer, db.ForeignKey('oltdevicecards.id', ondelete='CASCADE'), nullable=False)
+    port = db.Column(db.Integer, nullable=False)
+    state = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.String(255), nullable=True)
+
+    def __init__(self, id_card, port, state, status, description=None):
+        self.id_card = id_card
+        self.port = port
+        self.state = state
+        self.status = status
+        self.description = description
+
+    def to_dict(self):
+        data = {
+            'id':self.id,
+            'id_card':self.id_card,
+            'port':self.port,
+            'state':self.state,
+            'status':self.status,
+            'description':self.description
+        }
+        data['avg_rx_onu'] = 0
+        data['tx_power_olt'] = 0
+        data['total_onu'] = 0
+        data['total_onu_online'] = 0
+        return data

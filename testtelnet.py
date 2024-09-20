@@ -111,32 +111,9 @@ def telnet_to_olt(host, username, password, command, port):
 
         tn.sendline('exit')
         lines = output.strip().split("\n")
-        headers = lines[1].split()
-        parsed_data = []
-
-        for line in lines[3:-1]:
-            fields = line.split()
-            # Isi elemen yang kosong dengan string kosong
-            while len(fields) < 9:
-                if len(fields) < 7:
-                    fields.insert(-2, "")    
-                fields.insert(-1, "")
-
-            print(fields)
-            row = {
-                'Rack': fields[0],
-                'Frame': fields[1],
-                'Slot': fields[2],
-                'CfgType': fields[3],
-                'RealType': fields[4],
-                'Port': fields[5],
-                'HardVer': fields[6],
-                'SoftVer': fields[7],
-                'Status': fields[8]
-            }
-            parsed_data.append(row)
-
-        return parsed_data
+        print(lines)
+        
+        return lines
 
     except pexpect.TIMEOUT:
         return {'Error': 'Connection timed out.'}
@@ -151,7 +128,7 @@ def telnet_to_olt(host, username, password, command, port):
 host = "103.247.22.229"  # Ganti dengan IP OLT ZTE Anda
 username = "yayan"  # Ganti dengan username Anda
 password = "Yayan@12345"  # Ganti dengan password Anda
-command = "show card"
+command = "show interface gpon-olt_1/1/1"
 port = 234  # Port Telnet
 
 # Eksekusi fungsi telnet

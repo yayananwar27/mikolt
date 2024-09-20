@@ -82,6 +82,9 @@ class OltDeviceapi(MethodResource, Resource):
         )
         db.session.add(new_name)
         db.session.commit()
+
+        new_name.add_list_card()
+
         new_logging = MikoltLoggingModel(
             operator.username, 
             'oltdevices-device', 
@@ -90,23 +93,23 @@ class OltDeviceapi(MethodResource, Resource):
             )
         db.session.add(new_logging)
         db.session.commit()
-
+        
         #OLT cards
-        card_list = new_name.oltdevice_showcard()
-        for card in card_list:    
-            new_card = OltDevicesCardModels(
-                id,
-                card['Frame'],
-                card['Slot'],
-                card['Slot'],
-                card['CfgType'],
-                card['SoftVer'],
-                card['Status'],
-                card['type_port'],
-                created_time()
-            )
-            db.session.add(new_card)
-            db.session.commit()
+        # card_list = new_name.oltdevice_showcard()
+        # for card in card_list:    
+        #     new_card = OltDevicesCardModels(
+        #         id,
+        #         card['Frame'],
+        #         card['Slot'],
+        #         card['Slot'],
+        #         card['CfgType'],
+        #         card['SoftVer'],
+        #         card['Status'],
+        #         card['type_port'],
+        #         created_time()
+        #     )
+        #     db.session.add(new_card)
+        #     db.session.commit()
 
 
         msg = {'message':'success',
@@ -198,10 +201,11 @@ class OltDeviceapi(MethodResource, Resource):
         id_exists = OltDevicesModels.query.filter_by(id=id).first()
         if id_exists:
             #delete card 
-            list_card = OltDevicesCardModels.query.filter_by(id_device=id).all()
-            for card in list_card:
-                db.session.delete(card)
-                db.session.commit()
+            # list_card = OltDevicesCardModels.query.filter_by(id_device=id).all()
+            # for card in list_card:
+            #     db.session.delete(card)
+            #     db.session.commit()
+            id_exists.delete_list_card()
 
             data = id_exists.to_dict()
             db.session.delete(id_exists)

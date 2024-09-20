@@ -34,25 +34,29 @@ class OltDeviceCardapi(MethodResource, Resource):
                 list_allowed.append(_allowed.site_id)
             found_record = OltDevicesModels.query.filter(
                 OltDevicesModels.id_site.in_(list_allowed)
+            ).filter_by(
+                id=id
             ).order_by(OltDevicesModels.name.asc()).first()
 
             if found_record:
-                list_card = OltDevicesCardModels.query.filter_by(id_device=found_record.id).order_by(
-                    OltDevicesCardModels.type_port.asc()
-                ).all()
+                # list_card = OltDevicesCardModels.query.filter_by(id_device=found_record.id).order_by(
+                #     OltDevicesCardModels.type_port.asc()
+                # ).all()
+                data = found_record.show_list_card()
 
         else:
             found_record = OltDevicesModels.query.filter_by(id=id).first()
             if found_record:
-                list_card = OltDevicesCardModels.query.filter_by(id_device=found_record.id).order_by(
-                    OltDevicesCardModels.type_port.asc()
-                ).all()
+                # list_card = OltDevicesCardModels.query.filter_by(id_device=found_record.id).order_by(
+                #     OltDevicesCardModels.type_port.asc()
+                # ).all()
+                data = found_record.show_list_card()
         
         
-        if len(list_card)>0:
-            data = []
-            for card in list_card:
-                data.append(card.to_dict())
+        # if len(list_card)>0:
+        #     data = []
+        #     for card in list_card:
+        #         data.append(card.to_dict())
 
         return data
     
@@ -99,4 +103,34 @@ class OltDeviceCardapi(MethodResource, Resource):
                     db.session.commit()
 
             data = {'message':'success'}                    
+        return data
+
+
+class OltDeviceCardPonapi(MethodResource, Resource):
+    @doc(description='Show Olt Device Card Pon Port', tags=['OLT Device'], security=[{"ApiKeyAuth": []}])
+    @use_kwargs(IdOltDeviceShowCardSchema, location=('json'))
+    @auth.login_required(role=['api', 'noc', 'superadmin', 'teknisi'])
+    def post(self, **kwargs):
+        operator = auth.current_user()
+        id = kwargs['id']
+        data = {'message':'not found'}
+
+        if operator.role in ['teknisi']:
+            allowed_site = AllowedSiteUserModel.query.filter_by(username=operator.username).all()
+            list_allowed = []
+            for _allowed in allowed_site:
+                list_allowed.append(_allowed.site_id)
+            found_record = OltDevicesModels.query.filter(
+                OltDevicesModels.id_site.in_(list_allowed)
+            ).filter_by(
+                id=id
+            ).order_by(OltDevicesModels.name.asc()).first()
+
+            if found_record:
+               data = found_record.show_list_portpon()
+        else:
+            found_record = OltDevicesModels.query.filter_by(id=id).first()
+            if found_record:
+                data = found_record.show_list_portpon()
+        
         return data

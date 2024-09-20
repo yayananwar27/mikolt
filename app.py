@@ -41,7 +41,7 @@ from ooltdevices.models import init_db as init_db_oltdevices
 
 from ooltcommands.models_uptime import init_db as init_db_oltcommand_uptime
 from ooltcommands.models_showcard import init_db as init_db_oltcommand_showcard
-
+from ooltcommands.models_showcardpon import init_db as init_db_oltcommand_showcardpon
 
 scheduler.init_app(app)
 db.init_app(app)
@@ -58,6 +58,7 @@ init_db_oltdevices(app)
 
 init_db_oltcommand_uptime(app)
 init_db_oltcommand_showcard(app)
+init_db_oltcommand_showcardpon(app)
 
 # Middleware to log the request processing time
 @app.before_request
