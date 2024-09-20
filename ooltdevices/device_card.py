@@ -82,9 +82,8 @@ class OltDeviceCardapi(MethodResource, Resource):
                     exists_card.soft_ver = card['SoftVer']
                     exists_card.status = card['Status']
                     exists_card.type_port = card['type_port']
-                    
                     exists_card.last_update = created_time()
-
+                    exists_card.add_list_cardpon()
                     db.session.commit()
                 else:
                     
@@ -101,6 +100,7 @@ class OltDeviceCardapi(MethodResource, Resource):
                     )
                     db.session.add(new_card)
                     db.session.commit()
+                    new_card.add_list_cardpon()
 
             data = {'message':'success'}                    
         return data

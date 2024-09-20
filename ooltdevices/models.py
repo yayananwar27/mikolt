@@ -1,5 +1,5 @@
 from config import db
-
+from flask import current_app
 def init_db(app):
     with app.app_context():
         db.create_all()
@@ -256,18 +256,27 @@ class OltDevicesCardModels(db.Model):
     def add_list_cardpon(self):
         oltdevice = OltDevicesModels.query.filter_by(id=self.id_device).first()
         if self.type_port == 1:
-            for num_port in range(self.jml_port):
+            for num_port in range(int(self.jml_port)):
                 output = oltdevice.oltdevice_showcardpon(self.frame, self.slot, num_port)
-
-                new_pon = OltDevicesCardPonModels(
-                    self.id,
-                    output.pon,
-                    output.state,
-                    output.status,
-                    output.description
-                )
-                db.session.add(new_pon)
-                db.session.commit()
+                exists_pon = OltDevicesCardPonModels.query.filter_by(
+                    id_card=self.id,
+                    port=output['pon']
+                ).first()
+                if exists_pon:
+                    exists_pon.state=output['state']
+                    exists_pon.status=output['status']
+                    exists_pon.description=output['description']
+                    db.session.commit()
+                else:
+                    new_pon = OltDevicesCardPonModels(
+                        self.id,
+                        output['pon'],
+                        output['state'],
+                        output['status'],
+                        output['description']
+                    )
+                    db.session.add(new_pon)
+                    db.session.commit()
 
     #deletetan
     def delete_list_pon(self):
