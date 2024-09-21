@@ -147,6 +147,32 @@ class OltDevicesModels(db.Model):
             output = local_scope.get('output')   
         return output
     
+    def oltdevice_showuplink(self, frame, slot, pon):
+        from ooltcommands.models_showcarduplink import OltCommandsUplinkInfoModel
+        script_python = OltCommandsUplinkInfoModel.query.filter_by(
+            id_software = self.id_software
+        ).first()
+        output = None
+        if script_python:
+            local_scope = {'self': self,'frame':frame,'slot':slot,'pon':pon}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')   
+        return output
+
+
+    def oltdevice_showvlanuplinktag(self, name):
+        from ooltcommands.models_showuplinkvlan import OltCommandShowVlanTagModel
+        script_python = OltCommandShowVlanTagModel.query.filter_by(
+            id_software = self.id_software
+        ).first()
+        output = None
+        if script_python:
+            local_scope = {'self': self,'name':name}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')   
+        return output
+
+    
     #add addan
     def add_list_card(self):
         card_list = self.oltdevice_showcard()
@@ -180,13 +206,24 @@ class OltDevicesModels(db.Model):
     
     def show_list_portpon(self):
         data = []
-        list_card = OltDevicesCardModels.query.filter_by(id_device=self.id).order_by(
+        list_card = OltDevicesCardModels.query.filter_by(id_device=self.id, type_port=1).order_by(
             OltDevicesCardModels.type_port.asc()
         ).all()
         
         for card in list_card:
             data.append(card.pon_info())
         
+        return data
+
+    def show_list_uplink(self):
+        data = []
+        list_card = OltDevicesCardModels.query.filter_by(id_device=self.id, type_port=2).order_by(
+            OltDevicesCardModels.type_port.asc()
+        ).all()
+        
+        for card in list_card:
+            data.append(card.uplink_info())
+            
         return data
 
     #delete deletan
@@ -210,6 +247,7 @@ class OltDevicesCardModels(db.Model):
     type_port = db.Column(db.Integer, nullable=False) #1=GPON CARD,  2=Uplink Card
     last_update = db.Column(db.DateTime, nullable=False)
     oltcardpon_fk = db.relationship('OltDevicesCardPonModels', backref='oltcardpons', cascade="all, delete", passive_deletes=True, lazy=True)
+    oltcarduplink_fk = db.relationship('OltDevicesCardUplinkModels', backref='oltcarduplink', cascade="all, delete", passive_deletes=True, lazy=True)
     
 
     def __init__(self, id_device, frame_number, slot_number, jml_port, cfg_type, soft_ver, status, type_port, last_update):
@@ -252,6 +290,17 @@ class OltDevicesCardModels(db.Model):
         data['list_port'] = list_port    
         return data
     
+    def uplink_info(self):
+        list_uplink = []
+        if self.type_port == 1:
+            list_uplinks = OltDevicesCardUplinkModels.query.filter_by(id_card=self.id).all()
+            for uplink in list_uplinks:
+                data_uplink = uplink.to_dict()
+                oltnya = OltDevicesModels.query.filter_by(id=self.id_device).first()
+                data_uplink['vlan_tag'] = oltnya.oltdevice_showvlanuplinktag(data_uplink['name'])
+
+        return list_uplink
+
     #add addan
     def add_list_cardpon(self):
         oltdevice = OltDevicesModels.query.filter_by(id=self.id_device).first()
@@ -277,6 +326,31 @@ class OltDevicesCardModels(db.Model):
                     )
                     db.session.add(new_pon)
                     db.session.commit()
+        elif self.type_port == 2:
+            for num_port in range(int(self.jml_port)):
+                output = oltdevice.oltdevice_showuplink(self.frame, self.slot, num_port)
+                exists_uplink = OltDevicesCardUplinkModels.query.filter_by(
+                    id_card=self.id,
+                    port=output['port']
+                ).first()
+                if exists_uplink:
+                    exists_uplink.name=output['name']
+                    exists_uplink.port_type=output['port_type']
+                    exists_uplink.status=output['status']
+                    exists_uplink.description=output['description']
+                    db.session.commit()
+                else:
+                    new_pon = OltDevicesCardUplinkModels(
+                        self.id,
+                        output['port'],
+                        output['name'],
+                        output['status'],
+                        output['port_type'],
+                        output['description']
+                    )
+                    db.session.add(new_pon)
+                    db.session.commit()
+        
 
     #deletetan
     def delete_list_pon(self):
@@ -314,4 +388,35 @@ class OltDevicesCardPonModels(db.Model):
         data['tx_power_olt'] = 0
         data['total_onu'] = 0
         data['total_onu_online'] = 0
+        return data
+
+class OltDevicesCardUplinkModels(db.Model):
+    __tablename__ = 'oltdevicecarduplink'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_card = db.Column(db.Integer, db.ForeignKey('oltdevicecards.id', ondelete='CASCADE'), nullable=False)
+    port = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    status = db.Column(db.String(255), nullable=False)
+    port_type = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.String(255), nullable=True)
+
+    def __init__(self, id_card, port, name, status, port_type, description=None):
+        self.id_card = id_card
+        self.port = port
+        self.name = name
+        self.status = status
+        self.port_type = port_type
+        self.description = description
+
+    def to_dict(self):
+        data = {
+            'id':self.id,
+            'id_card': self.id_card,
+            'name':self.name,
+            'port':self.port,
+            'status':self.status,
+            'port_type':self.port_type,
+            'description':self.description,
+            'vlan_tag':''
+        }
         return data

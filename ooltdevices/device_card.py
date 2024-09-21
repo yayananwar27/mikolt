@@ -134,3 +134,33 @@ class OltDeviceCardPonapi(MethodResource, Resource):
                 data = found_record.show_list_portpon()
         
         return data
+    
+
+class OltDeviceCardUplinkapi(MethodResource, Resource):
+    @doc(description='Show Olt Device Card Uplink', tags=['OLT Device'], security=[{"ApiKeyAuth": []}])
+    @use_kwargs(IdOltDeviceShowCardSchema, location=('json'))
+    @auth.login_required(role=['api', 'noc', 'superadmin', 'teknisi'])
+    def post(self, **kwargs):
+        operator = auth.current_user()
+        id = kwargs['id']
+        data = {'message':'not found'}
+
+        if operator.role in ['teknisi']:
+            allowed_site = AllowedSiteUserModel.query.filter_by(username=operator.username).all()
+            list_allowed = []
+            for _allowed in allowed_site:
+                list_allowed.append(_allowed.site_id)
+            found_record = OltDevicesModels.query.filter(
+                OltDevicesModels.id_site.in_(list_allowed)
+            ).filter_by(
+                id=id
+            ).order_by(OltDevicesModels.name.asc()).first()
+
+            if found_record:
+               data = found_record.show_list_uplink()
+        else:
+            found_record = OltDevicesModels.query.filter_by(id=id).first()
+            if found_record:
+                data = found_record.show_list_uplink()
+        
+        return data
