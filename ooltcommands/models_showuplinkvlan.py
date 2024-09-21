@@ -43,7 +43,7 @@ def telnet_to_olt(host, username, password, command, port):
         tn.sendline('exit')
         
         vlan_pattern = r"switchport vlan ([\d,-]+) tag"
-        vlans = re.findall(vlan_pattern, config_output)
+        vlans = re.findall(vlan_pattern, output)
 
         vlan_list = ",".join(vlans)
 

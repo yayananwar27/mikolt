@@ -156,7 +156,7 @@ class OltDevicesModels(db.Model):
         if script_python:
             local_scope = {'self': self,'frame':frame,'slot':slot,'pon':pon}
             exec(script_python.script_python, {}, local_scope)
-            output = local_scope.get('output')   
+            output = local_scope.get('output')
         return output
 
 
@@ -222,8 +222,9 @@ class OltDevicesModels(db.Model):
         ).all()
         
         for card in list_card:
-            data.append(card.uplink_info())
-            
+            #data.append(card.uplink_info())
+            data = data+card.uplink_info()
+
         return data
 
     #delete deletan
@@ -292,13 +293,13 @@ class OltDevicesCardModels(db.Model):
     
     def uplink_info(self):
         list_uplink = []
-        if self.type_port == 1:
+        if self.type_port == 2:
             list_uplinks = OltDevicesCardUplinkModels.query.filter_by(id_card=self.id).all()
             for uplink in list_uplinks:
                 data_uplink = uplink.to_dict()
                 oltnya = OltDevicesModels.query.filter_by(id=self.id_device).first()
                 data_uplink['vlan_tag'] = oltnya.oltdevice_showvlanuplinktag(data_uplink['name'])
-
+                list_uplink.append(data_uplink)
         return list_uplink
 
     #add addan
