@@ -172,6 +172,17 @@ class OltDevicesModels(db.Model):
             output = local_scope.get('output')   
         return output
 
+    def oltdevice_showonutype(self):
+        from ooltcommands.models_showcardonutype import OltCommandsOnuTypeModel
+        script_python = OltCommandsOnuTypeModel.query.filter_by(
+            id_software = self.id_software
+        ).first()
+        output = None
+        if script_python:
+            local_scope = {'self': self}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')   
+        return output
     
     #add addan
     def add_list_card(self):

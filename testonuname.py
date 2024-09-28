@@ -1,3 +1,4 @@
+#show onu-type
 data = """
 ONU type name:          ZTE-F601
 PON type:               gpon
