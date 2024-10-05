@@ -84,6 +84,7 @@ class OltDeviceapi(MethodResource, Resource):
         db.session.commit()
 
         new_name.add_list_card()
+        new_name.add_vlans()
 
         new_logging = MikoltLoggingModel(
             operator.username, 

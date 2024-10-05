@@ -45,6 +45,7 @@ from ooltcommands.models_showcardpon import init_db as init_db_oltcommand_showca
 from ooltcommands.models_showcarduplink import init_db as init_db_oltcommand_showcarduplink
 from ooltcommands.models_showuplinkvlan import init_db as init_db_oltcommand_showuplinkvlan
 from ooltcommands.models_showcardonutype import init_db as init_db_oltcommand_showcardonutype
+from ooltcommands.models_showvlan import init_db as init_db_oltcommand_showvlan
 
 scheduler.init_app(app)
 db.init_app(app)
@@ -65,6 +66,7 @@ init_db_oltcommand_showcardpon(app)
 init_db_oltcommand_showcarduplink(app)
 init_db_oltcommand_showuplinkvlan(app)
 init_db_oltcommand_showcardonutype(app)
+init_db_oltcommand_showvlan(app)
 
 # Middleware to log the request processing time
 @app.before_request

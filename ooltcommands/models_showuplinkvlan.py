@@ -30,6 +30,7 @@ def insert_initial_data(*args, **kwargs):
 def telnet_to_olt(host, username, password, command, port):
     import pexpect
     import re
+    switchport_mode = None
     try:
         tn = pexpect.spawn(f'telnet {host} {port}')
         tn.expect('Username:', timeout=10)
@@ -41,13 +42,23 @@ def telnet_to_olt(host, username, password, command, port):
         tn.expect('#', timeout=10)
         output = tn.before.decode('ascii')
         tn.sendline('exit')
+
+        for line in output.splitlines():
+            if "switchport mode" in line:
+                switchport_mode = line.split("switchport mode")[1].strip()
+                break
+
         
         vlan_pattern = r"switchport vlan ([\d,-]+) tag"
         vlans = re.findall(vlan_pattern, output)
 
         vlan_list = ",".join(vlans)
 
-        return vlan_list
+        data = {
+            'vlan_list':vlan_list,
+            'mode':switchport_mode
+        }
+        return data
     
     except pexpect.TIMEOUT:
         return "Error: Connection timed out."
@@ -63,6 +74,9 @@ password = self.telnet_pass
 command = "show run inter {}".format(name)
 port = self.telnet_port
 output = telnet_to_olt(host, username, password, command, port)
+output_list = output['vlan_list']
+output_mode = output['mode']
+
         '''
     )
     db.session.add(uptime_software_1)

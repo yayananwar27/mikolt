@@ -25,7 +25,9 @@ class OltDevicesModels(db.Model):
     id_merk = db.Column(db.Integer, db.ForeignKey('oltmerk.id', ondelete='CASCADE'), nullable=False)
     id_software = db.Column(db.Integer, db.ForeignKey('oltsoftware.id', ondelete='CASCADE'), nullable=False)
     oltdevicecard_fk = db.relationship('OltDevicesCardModels', backref='oltdevicecards', cascade="all, delete", passive_deletes=True, lazy=True)
+    oltvlans_fk = db.relationship('OltDevicesVlansModels', backref='oltvlans', cascade="all, delete", passive_deletes=True, lazy=True)
     
+
     def __init__(
             self, 
             name, 
@@ -165,13 +167,18 @@ class OltDevicesModels(db.Model):
         script_python = OltCommandShowVlanTagModel.query.filter_by(
             id_software = self.id_software
         ).first()
-        output = None
+        data = {
+            'vlan_tag':[],
+            'mode':''
+        }
         if script_python:
             local_scope = {'self': self,'name':name}
             exec(script_python.script_python, {}, local_scope)
-            output = local_scope.get('output')   
-        return output
-
+            #output = local_scope.get('output')   
+            data['vlan_tag']=local_scope.get('output_list')
+            data['mode']=local_scope.get('output_mode')
+        return data
+        
     def oltdevice_showonutype(self):
         from ooltcommands.models_showcardonutype import OltCommandsOnuTypeModel
         script_python = OltCommandsOnuTypeModel.query.filter_by(
@@ -184,6 +191,19 @@ class OltDevicesModels(db.Model):
             output = local_scope.get('output')   
         return output
     
+    def oltdevice_showvlan(self):
+        from ooltcommands.models_showvlan import OltCommandShowVlanModel
+        script_python = OltCommandShowVlanModel.query.filter_by(
+            id_software = self.id_software
+        ).first()
+        output = None
+        if script_python:
+            local_scope = {'self': self}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')  
+        return output
+    
+
     #add addan
     def add_list_card(self):
         card_list = self.oltdevice_showcard()
@@ -202,6 +222,31 @@ class OltDevicesModels(db.Model):
             db.session.add(new_card)
             db.session.commit()
             new_card.add_list_cardpon()
+
+    def add_vlans(self):
+        vlans_list = self.oltdevice_showvlan()
+        for vlan in vlans_list:
+            vlan_exists = OltDevicesVlansModels.query.filter_by(
+                id_device=self.id,
+                vlan_id=vlan['vlan_id']
+            ).first()
+            if vlan_exists:
+                vlan_exists.name = vlan['name']
+                vlan_exists.description = vlan['description']
+                vlan_exists.onu_profile = vlan['onu_profile']
+                vlan_exists.multicast_igmp = vlan['multicast_igmp']
+                db.session.commit()
+            else:
+                new_vlan = OltDevicesVlansModels(
+                    self.id,
+                    vlan['vlan_id'],
+                    vlan['name'],
+                    vlan['description'],
+                    vlan['onu_profile'],
+                    vlan['multicast_igmp']
+                )
+                db.session.add(new_vlan)
+                db.session.commit()
 
 
     #show showann
@@ -236,6 +281,14 @@ class OltDevicesModels(db.Model):
             #data.append(card.uplink_info())
             data = data+card.uplink_info()
 
+        return data
+
+    def show_list_vlans(self):
+        data = []
+        list_vlans = OltDevicesVlansModels.query.filter_by(id_device=self.id).all()
+        for vlan in list_vlans:
+            data.append(vlan.to_dict())
+        
         return data
 
     #delete deletan
@@ -309,7 +362,9 @@ class OltDevicesCardModels(db.Model):
             for uplink in list_uplinks:
                 data_uplink = uplink.to_dict()
                 oltnya = OltDevicesModels.query.filter_by(id=self.id_device).first()
-                data_uplink['vlan_tag'] = oltnya.oltdevice_showvlanuplinktag(data_uplink['name'])
+                _data_uplink = oltnya.oltdevice_showvlanuplinktag(data_uplink['name'])
+                data_uplink['vlan_tag'] = _data_uplink['vlan_tag']
+                data_uplink['mode']=_data_uplink['mode']
                 list_uplink.append(data_uplink)
         return list_uplink
 
@@ -429,6 +484,38 @@ class OltDevicesCardUplinkModels(db.Model):
             'status':self.status,
             'port_type':self.port_type,
             'description':self.description,
-            'vlan_tag':''
+            'vlan_tag':'',
+            'mode':''
         }
+        return data
+    
+class OltDevicesVlansModels(db.Model):
+    __tablename__ = 'oltdevicevlans'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_device = db.Column(db.Integer, db.ForeignKey('oltdevices.id', ondelete='CASCADE'), nullable=False)
+    vlan_id = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(255), nullable=True)
+    description = db.Column(db.String(255), nullable=True)
+    onu_profile = db.Column(db.String(255), nullable=True)
+    multicast_igmp = db.Column(db.Boolean, nullable=False)
+
+    def __init__(self, id_device, vlan_id, name=None, description=None, onu_profile=None, multicast_igmp=False):
+        self.id_device = id_device
+        self.vlan_id = vlan_id
+        self.name = name
+        self.description = description
+        self.onu_profile = onu_profile
+        self.multicast_igmp = multicast_igmp
+
+    def to_dict(self):
+        data = {
+            'id':self.id,
+            'id_device':self.id_device,
+            'vlan_id':self.vlan_id,
+            'name':self.name,
+            'description':self.description,
+            'onu_profile':self.onu_profile,
+            'multicast_igmp':self.multicast_igmp
+        }
+
         return data
