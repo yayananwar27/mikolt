@@ -248,6 +248,29 @@ class OltDevicesModels(db.Model):
                 db.session.add(new_vlan)
                 db.session.commit()
 
+    def add_uplink_vlantag(self, interface, vlan_tag):
+        from ooltcommands.models_adduplinkvlan import OltCommandaddUplinkVlanModel
+        script_python = OltCommandaddUplinkVlanModel.query.filter_by(
+            id_software = self.id_software
+        ).first()
+        output = None
+        if script_python:
+            local_scope = {'self': self, 'interface':interface, 'vlan_tag':vlan_tag}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')  
+        return output
+    
+    def delete_uplink_vlantag(self, interface, vlan_tag):
+        from ooltcommands.models_deleteuplinkvlan import OltCommanddeleteUplinkVlanModel
+        script_python = OltCommanddeleteUplinkVlanModel.query.filter_by(
+            id_software = self.id_software
+        ).first()
+        output = None
+        if script_python:
+            local_scope = {'self': self, 'interface':interface, 'vlan_tag':vlan_tag}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')  
+        return output
 
     #show showann
     def show_list_card(self):
@@ -425,6 +448,10 @@ class OltDevicesCardModels(db.Model):
         for card in list_card:
             db.session.delete(card)
             db.session.commit()
+        list_card = OltDevicesCardUplinkModels.query.filter_by(id_card=self.id).all()
+        for card in list_card:
+            db.session.delete(card)
+            db.session.commit()
 
 class OltDevicesCardPonModels(db.Model):
     __tablename__ = 'oltdevicecardpons'
@@ -489,6 +516,30 @@ class OltDevicesCardUplinkModels(db.Model):
         }
         return data
     
+    def add_vlan_tag(self, vlan_tag):
+        msg = 'failed'
+        card_uplink = OltDevicesCardModels.query.filter_by(id=self.id_card).first()
+        if card_uplink:
+            device_exists = OltDevicesModels.query.filter_by(id=card_uplink.id_device).first()
+            if device_exists:
+                msg = device_exists.add_uplink_vlantag(self.name, vlan_tag)
+                if msg:
+                    device_exists.add_vlans()
+        return msg
+
+    def delete_vlan_tag(self, vlan_tag):
+        msg = 'failed'
+        card_uplink = OltDevicesCardModels.query.filter_by(id=self.id_card).first()
+        if card_uplink:
+            device_exists = OltDevicesModels.query.filter_by(id=card_uplink.id_device).first()
+            if device_exists:
+                msg = device_exists.delete_uplink_vlantag(self.name, vlan_tag)
+                if msg:
+                    device_exists.add_vlans()
+        return msg
+
+
+
 class OltDevicesVlansModels(db.Model):
     __tablename__ = 'oltdevicevlans'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
