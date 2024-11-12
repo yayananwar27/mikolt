@@ -60,17 +60,35 @@ class OltDeviceCardapi(MethodResource, Resource):
 
         return data
     
-    @doc(description='Update Olt Device Card', tags=['OLT Device'], security=[{"ApiKeyAuth": []}])
+    @doc(description='Sync Olt Device Card', tags=['OLT Device'], security=[{"ApiKeyAuth": []}])
     @use_kwargs(IdOltDeviceShowCardSchema, location=('json'))
     @auth.login_required(role=['api', 'noc', 'superadmin', 'teknisi'])
     def put(self, **kwargs):
         id = kwargs['id']
         data = {'message':'Update Failed'}
+        operator = auth.current_user()
 
-        device_exists = OltDevicesModels.query.filter_by(id=id).first()
-        if device_exists:
-            device_exists.add_list_card()
-            data = {'message':'success'}                    
+        if operator.role in ['teknisi']:
+            allowed_site = AllowedSiteUserModel.query.filter_by(username=operator.username).all()
+            list_allowed = []
+            for _allowed in allowed_site:
+                list_allowed.append(_allowed.site_id)
+            found_record = OltDevicesModels.query.filter(
+                OltDevicesModels.id_site.in_(list_allowed)
+            ).filter_by(
+                id=id
+            ).order_by(OltDevicesModels.name.asc()).first()
+
+            if found_record:
+                found_record.add_list_card()
+            data['message']='success'
+
+        else:
+            found_record = OltDevicesModels.query.filter_by(id=id).first()
+            if found_record:
+                found_record.add_list_card()
+                data['message']='success'
+                       
         return data
 
 

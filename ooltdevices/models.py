@@ -161,7 +161,6 @@ class OltDevicesModels(db.Model):
             output = local_scope.get('output')
         return output
 
-
     def oltdevice_showvlanuplinktag(self, name):
         from ooltcommands.models_showuplinkvlan import OltCommandShowVlanTagModel
         script_python = OltCommandShowVlanTagModel.query.filter_by(
@@ -204,7 +203,7 @@ class OltDevicesModels(db.Model):
         return output
     
 
-    #add addan
+    #OLT add addan
     def add_list_card(self):
         card_list_exists = self.show_list_card()
         card_list = self.oltdevice_showcard()
@@ -310,7 +309,33 @@ class OltDevicesModels(db.Model):
             exec(script_python.script_python, {}, local_scope)
             output = local_scope.get('output')  
         return output
-    
+
+    def add_device_vlan(self, data):
+        from ooltcommands.models_adddevicevlan import OltCommandaddDeviceVlanModel
+        script_python = OltCommandaddDeviceVlanModel.query.filter_by(
+            id_software = self.id_software
+        ).first()
+        output = None
+        if script_python:
+            local_scope = {'self': self, 'data':data}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')  
+        return output
+
+    #OLT update updatean
+    def update_device_vlan(self, data):
+        from ooltcommands.models_updatedevicevlan import OltCommandupdateDeviceVlanModel
+        script_python = OltCommandupdateDeviceVlanModel.query.filter_by(
+            id_software = self.id_software
+        ).first()
+        output = None
+        if script_python:
+            local_scope = {'self': self, 'data':data}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')  
+        return output
+
+    #OLT delete deletan
     def delete_uplink_vlantag(self, interface, vlan_tag):
         from ooltcommands.models_deleteuplinkvlan import OltCommanddeleteUplinkVlanModel
         script_python = OltCommanddeleteUplinkVlanModel.query.filter_by(
@@ -319,6 +344,18 @@ class OltDevicesModels(db.Model):
         output = None
         if script_python:
             local_scope = {'self': self, 'interface':interface, 'vlan_tag':vlan_tag}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')  
+        return output
+    
+    def delete_device_vlan(self, vlan_id):
+        from ooltcommands.models_deletedevicevlan import OltCommanddeleteDeviceVlanModel
+        script_python = OltCommanddeleteDeviceVlanModel.query.filter_by(
+            id_software = self.id_software
+        ).first()
+        output = None
+        if script_python:
+            local_scope = {'self': self, 'vlan_id':vlan_id}
             exec(script_python.script_python, {}, local_scope)
             output = local_scope.get('output')  
         return output
