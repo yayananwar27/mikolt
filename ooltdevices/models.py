@@ -206,25 +206,76 @@ class OltDevicesModels(db.Model):
 
     #add addan
     def add_list_card(self):
+        card_list_exists = self.show_list_card()
         card_list = self.oltdevice_showcard()
-        for card in card_list:    
-            new_card = OltDevicesCardModels(
-                id,
-                card['Frame'],
-                card['Slot'],
-                card['Slot'],
-                card['CfgType'],
-                card['SoftVer'],
-                card['Status'],
-                card['type_port'],
-                created_time()
-            )
-            db.session.add(new_card)
+
+        fs_card = {(item['Frame'], item['Slot']) for item in card_list}
+        card_not_in_list = [item for item in card_list_exists if (item['frame'], item['slot']) not in fs_card]
+
+        for not_in in card_not_in_list:
+            card_exists = OltDevicesCardModels.query.filter_by(
+                id_device=self.id,
+                frame=not_in['frame'],
+                slot=not_in['slot']
+            ).first()
+            card_exists.delete_list_pon()
+            db.session.delete(card_exists)
             db.session.commit()
-            new_card.add_list_cardpon()
+
+        for card in card_list:
+            card_exists = OltDevicesCardModels.query.filter_by(
+                id_device=self.id,
+                frame=card['Frame'],
+                slot=card['Slot']
+            ).first()
+            if card_exists:
+                if card_exists.type_port != card['type_port']:
+                    card_exists.delete_list_pon()
+                    card_exists.type_port = card['type_port']
+                    card_exists.cfg_type = card['CfgType']
+                    card_exists.jml_port = card['Port']
+                    
+                elif card_exists.jml_port != card['Port']:
+                    card_exists.cfg_type = card['CfgType']
+                    card_exists.jml_port = card['Port']
+                
+                card_exists.soft_ver = card['SoftVer']  
+                card_exists.status = card['Status']
+                card_exists.last_update = created_time()
+                card_exists.add_list_cardpon()
+                db.session.commit()
+            else:
+                new_card = OltDevicesCardModels(
+                    self.id,
+                    card['Frame'],
+                    card['Slot'],
+                    card['Port'],
+                    card['CfgType'],
+                    card['SoftVer'],
+                    card['Status'],
+                    card['type_port'],
+                    created_time()
+                )
+                db.session.add(new_card)
+                db.session.commit()
+                new_card.add_list_cardpon()
 
     def add_vlans(self):
+        vlans_list_exists = self.show_list_vlans()
         vlans_list = self.oltdevice_showvlan()
+
+        vlanid_list = {item['vlan_id'] for item in vlans_list}
+        vlanid_not_in_list = [item for item in vlans_list_exists if item['vlan_id'] not in vlanid_list]
+
+        for not_in in vlanid_not_in_list:
+            vlanid_exists = OltDevicesVlansModels.query.filter_by(
+                id_device=self.id,
+                vlan_id=not_in['vlan_id']
+            ).first()
+            db.session.delete(vlanid_exists)
+            db.session.commit()
+
+
         for vlan in vlans_list:
             vlan_exists = OltDevicesVlansModels.query.filter_by(
                 id_device=self.id,
@@ -523,8 +574,8 @@ class OltDevicesCardUplinkModels(db.Model):
             device_exists = OltDevicesModels.query.filter_by(id=card_uplink.id_device).first()
             if device_exists:
                 msg = device_exists.add_uplink_vlantag(self.name, vlan_tag)
-                if msg:
-                    device_exists.add_vlans()
+                #if msg:
+                #    device_exists.add_vlans()
         return msg
 
     def delete_vlan_tag(self, vlan_tag):
@@ -534,8 +585,8 @@ class OltDevicesCardUplinkModels(db.Model):
             device_exists = OltDevicesModels.query.filter_by(id=card_uplink.id_device).first()
             if device_exists:
                 msg = device_exists.delete_uplink_vlantag(self.name, vlan_tag)
-                if msg:
-                    device_exists.add_vlans()
+                #if msg:
+                #    device_exists.add_vlans()
         return msg
 
 

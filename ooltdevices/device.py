@@ -95,23 +95,6 @@ class OltDeviceapi(MethodResource, Resource):
         db.session.add(new_logging)
         db.session.commit()
         
-        #OLT cards
-        # card_list = new_name.oltdevice_showcard()
-        # for card in card_list:    
-        #     new_card = OltDevicesCardModels(
-        #         id,
-        #         card['Frame'],
-        #         card['Slot'],
-        #         card['Slot'],
-        #         card['CfgType'],
-        #         card['SoftVer'],
-        #         card['Status'],
-        #         card['type_port'],
-        #         created_time()
-        #     )
-        #     db.session.add(new_card)
-        #     db.session.commit()
-
 
         msg = {'message':'success',
                'data':new_name.to_dict()

@@ -206,7 +206,7 @@ class ClientPPPSecretsApi(MethodResource, Resource):
                 }
                 return jsonify(data)
 
-        if 'site_id' in request.args:    
+        if 'site_id' in request.args and not ('page' in request.args and 'per_page' in request.args):    
             site_id = request.args.get('site_id')
             if site_id != None:
                 if operator.role in ['teknisi', 'teknisi', 'admin']:
@@ -295,7 +295,26 @@ class ClientPPPSecretsApi(MethodResource, Resource):
 
             query = ClientPPPModel.query
 
-            if 'configuration' in request.args or 'status' in request.args:
+            if 'configuration' in request.args or 'status' in request.args or 'site_id' in request.args:
+                _site_id = request.args.get('site_id', None, type=int)
+
+                if _site_id != None:
+                    if operator.role in ['teknisi', 'teknisi', 'admin']:
+                        site_exists = SitesModel.query.filter(
+                            SitesModel.site_id.in_(allowed_site)
+                        ).filter_by(site_id=_site_id).first()
+                    else:
+                        site_exists = SitesModel.query.filter_by(site_id=_site_id).first()
+                    if site_exists:
+                        data_mikrotik = MmikrotikModel.query.filter_by(site_id=_site_id).all()
+                        _data_mikrotik = []
+                        for mikrotik in data_mikrotik:
+                            _data_mikrotik.append(mikrotik.mikrotik_id)
+
+                        query = query.filter(
+                            ClientPPPModel.mikrotik_id.in_(_data_mikrotik))
+                        
+
                 _configuration = request.args.get('configuration', '', type=str)
                 _status = request.args.get('status', '', type=str)
                 # initial_filter = and_(

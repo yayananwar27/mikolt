@@ -69,39 +69,7 @@ class OltDeviceCardapi(MethodResource, Resource):
 
         device_exists = OltDevicesModels.query.filter_by(id=id).first()
         if device_exists:
-            card_list = device_exists.oltdevice_showcard()
-            for card in card_list:
-                exists_card = OltDevicesCardModels.query.filter_by(
-                    id_device=id,
-                    frame=card['Frame'],
-                    slot=card['Slot']
-                ).first()
-                if exists_card:
-                    exists_card.cfg_type = card['CfgType']
-                    exists_card.jml_port = card['Port']
-                    exists_card.soft_ver = card['SoftVer']
-                    exists_card.status = card['Status']
-                    exists_card.type_port = card['type_port']
-                    exists_card.last_update = created_time()
-                    exists_card.add_list_cardpon()
-                    db.session.commit()
-                else:
-                    
-                    new_card = OltDevicesCardModels(
-                        id,
-                        card['Frame'],
-                        card['Slot'],
-                        card['Slot'],
-                        card['CfgType'],
-                        card['SoftVer'],
-                        card['Status'],
-                        card['type_port'],
-                        created_time()
-                    )
-                    db.session.add(new_card)
-                    db.session.commit()
-                    new_card.add_list_cardpon()
-
+            device_exists.add_list_card()
             data = {'message':'success'}                    
         return data
 
