@@ -38,6 +38,7 @@ from ospeedprofile.models import init_db as init_db_speedprofile
 from oonutypes.models import init_db as init_db_onutypes
 from ooltmaster.models import init_db as init_db_oltmaster
 from ooltdevices.models import init_db as init_db_oltdevices
+from ooltonu.models import init_db as init_db_oltonu
 
 from ooltcommands.models_uptime import init_db as init_db_oltcommand_uptime
 from ooltcommands.models_showcard import init_db as init_db_oltcommand_showcard
@@ -46,6 +47,7 @@ from ooltcommands.models_showcarduplink import init_db as init_db_oltcommand_sho
 from ooltcommands.models_showuplinkvlan import init_db as init_db_oltcommand_showuplinkvlan
 from ooltcommands.models_showcardonutype import init_db as init_db_oltcommand_showcardonutype
 from ooltcommands.models_showvlan import init_db as init_db_oltcommand_showvlan
+from ooltcommands.models_showlistonu import init_db as init_db_oltcommand_showlistonu
 
 from ooltcommands.models_adddevicevlan import init_db as init_db_adddevicevlan
 from ooltcommands.models_adduplinkvlan import init_db as init_db_adduplinkvlan
@@ -65,6 +67,7 @@ init_db_speedprofile(app)
 init_db_onutypes(app)
 init_db_oltmaster(app)
 init_db_oltdevices(app)
+init_db_oltonu(app)
 
 init_db_oltcommand_uptime(app)
 init_db_oltcommand_showcard(app)
@@ -73,6 +76,7 @@ init_db_oltcommand_showcarduplink(app)
 init_db_oltcommand_showuplinkvlan(app)
 init_db_oltcommand_showcardonutype(app)
 init_db_oltcommand_showvlan(app)
+init_db_oltcommand_showlistonu(app)
 
 init_db_adddevicevlan(app)
 init_db_adduplinkvlan(app)
@@ -173,6 +177,11 @@ with app.app_context():
     from ooltdevices.app import init_docs as init_docs_oltdevices, oltdevices_api
     app.register_blueprint(oltdevices_api, url_prefix='/olt/devices')
     init_docs_oltdevices(docs)
+
+    #olt Onu
+    from ooltonu.app import init_docs as init_docs_oltonu, oltonu_api
+    app.register_blueprint(oltonu_api, url_prefix='/olt/onu')
+    init_docs_oltonu(docs)
 
 if __name__ == "__main__":
 

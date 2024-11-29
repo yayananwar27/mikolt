@@ -1,7 +1,34 @@
-import pexpect
-import re
+from config import db, event
 
+def init_db(app):
+    with app.app_context():
+        db.create_all()
+
+
+class OltCommandShowListOnuModel(db.Model):
+    __tablename__ = 'oltcommandshowlistonu'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_software = db.Column(db.Integer, db.ForeignKey('oltsoftware.id', ondelete='CASCADE'), nullable=False)
+    script_python = db.Column(db.Text, nullable=False)
+
+    def __init__(self, id_software, script_python):
+        self.id_software = id_software
+        self.script_python = script_python
+
+    def to_dict(self):
+        return {
+            'id':self.id,
+            'id_software':self.id_software,
+            'script_python':self.script_python
+        }
+    
+# Fungsi untuk memasukkan data awal
+def insert_initial_data(*args, **kwargs):
+    showlistonu_software_1 = OltCommandShowListOnuModel(
+        id_software=1, 
+        script_python='''
 def telnet_to_olt(host, username, password, command, port):
+    import pexpect
     try:
         tn = pexpect.spawn(f'telnet {host} {port}')
         tn.expect('Username:', timeout=10)
@@ -15,7 +42,7 @@ def telnet_to_olt(host, username, password, command, port):
             i = tn.expect(["--More--", "#"], timeout=300)
             output += tn.before.decode('ascii')
             if i == 0:  
-                tn.sendline("\r")  # Skip the "--More--" prompt
+                tn.sendline("\\r")  # Skip the "--More--" prompt
             elif i == 1:
                 break
         
@@ -32,6 +59,7 @@ def telnet_to_olt(host, username, password, command, port):
 
 
 def parse_olt_output(output):
+    import re
     # Pattern untuk menemukan id, type, dan SN
     pattern = r"onu (\d+) type (\S+) sn (\S+)"
     matches = re.findall(pattern, output)
@@ -50,20 +78,18 @@ def parse_olt_output(output):
 
 
 # Konfigurasi
-host = "103.247.21.15"  # Ganti dengan IP OLT ZTE Anda
-username = "yayan"  # Ganti dengan username Anda
-password = "Yayan@12345"  # Ganti dengan password Anda
-frame=1
-slot=1
-port=1
+host = self.host
+username = self.telnet_user
+password = self.telnet_pass
 command = "show running-config interface gpon-olt_{0}/{1}/{2}".format(frame, slot, port)
-telnet_port = 234  # Port Telnet
+telnet_port = self.telnet_port
 # Menjalankan Telnet dan mengambil output
 _output = telnet_to_olt(host, username, password, command, telnet_port)
 # Parsing output menjadi list of dict
 onu_list = parse_olt_output(_output)
 
 def telnet_to_olt2(host, username, password, command, port):
+    import pexpect
     try:
         tn = pexpect.spawn(f'telnet {host} {port}')
         tn.expect('Username:', timeout=10)
@@ -77,7 +103,7 @@ def telnet_to_olt2(host, username, password, command, port):
             i = tn.expect(["--More--", "#"], timeout=300)
             output += tn.before.decode('ascii')
             if i == 0:  
-                tn.sendline("\r")  # Skip the "--More--" prompt
+                tn.sendline("\\r")  # Skip the "--More--" prompt
             elif i == 1:
                 break
         
@@ -94,6 +120,7 @@ def telnet_to_olt2(host, username, password, command, port):
         return str(e)
 
 def parse_olt_output2(output):
+    import re
     parsed_data = {}
     
     # Extract interface name
@@ -102,18 +129,18 @@ def parse_olt_output2(output):
         parsed_data["interface"] = interface_match.group(1)
 
     # Extract name
-    name_match = re.search(r"name ([^\n]+)", output)
+    name_match = re.search(r"name ([^\\n]+)", output)
     if name_match:
         parsed_data["name"] = name_match.group(1).strip()
 
     # Extract description
-    description_match = re.search(r"description ([^\n]+)", output)
+    description_match = re.search(r"description ([^\\n]+)", output)
     if description_match:
         parsed_data["description"] = description_match.group(1).strip()
     
     # Extract TCONT
     parsed_data["tcont"] = []
-    tcont_matches = re.findall(r"tcont (\d+) name ([^\n]+)", output)
+    tcont_matches = re.findall(r"tcont (\d+) name ([^\\n]+)", output)
     for tcont_id, tcont_name in tcont_matches:
         parsed_data["tcont"].append({"id": int(tcont_id), "name": tcont_name.strip()})
     
@@ -154,6 +181,14 @@ for onu in onu_list:
         'onu_type':onu['type'],
         'name':output2['name'],
         'description':output2['description'],
+        'json_runningonu':output2,
         'raw_runningonu':_output
     }
     output.append(_data)
+
+        '''
+    )
+    db.session.add(showlistonu_software_1)
+    db.session.commit()
+
+event.listen(OltCommandShowListOnuModel.__table__, 'after_create', insert_initial_data)

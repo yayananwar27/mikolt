@@ -156,24 +156,29 @@ def TarikStatsJob():
                 executor.map(lambda result: masukkan_data(app, result), results)  
 
         x = int(repr(os.getpid())[-1])
-        if x > 0:
-            x+=1
-        elif x == 1:
-            x+=5
-        elif x > 1:
-            x+=10
-        time.sleep(x)
-        last_data = ClientPPPStatsModel.query.order_by(ClientPPPStatsModel.id.desc()).first()
-        intervalnya = int(os.environ["INTERVAL_GET_STATS"])
-        if last_data:
-            nextnya = last_data.time_updated + intervalnya
-            if time_updated >= nextnya:
-                current_app.logger.info('Jobs tarik stats')
-                tarik_datanya()
-            else:
-                #current_app.logger.info('skipping tarik stats')
-                pass
-        else:
+        # if x > 0:
+        #     x+=1
+        # elif x == 1:
+        #     x+=5
+        # elif x > 1:
+        #     x+=10
+        # time.sleep(x)
+        # last_data = ClientPPPStatsModel.query.order_by(ClientPPPStatsModel.id.desc()).first()
+        # intervalnya = int(os.environ["INTERVAL_GET_STATS"])
+        # if last_data:
+        #     nextnya = last_data.time_updated + intervalnya
+        #     if time_updated >= nextnya:
+        #         current_app.logger.info('Jobs tarik stats')
+        #         tarik_datanya()
+        #     else:
+        #         #current_app.logger.info('skipping tarik stats')
+        #         pass
+        # else:
+        #     current_app.logger.info('Jobs tarik stats')
+        #     tarik_datanya()
 
+        if x == 1:
             current_app.logger.info('Jobs tarik stats')
             tarik_datanya()
+        else:
+            current_app.logger.info('PID {} skipping tarik stats'.format(x))

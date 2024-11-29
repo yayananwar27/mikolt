@@ -26,7 +26,7 @@ class OltDevicesModels(db.Model):
     id_software = db.Column(db.Integer, db.ForeignKey('oltsoftware.id', ondelete='CASCADE'), nullable=False)
     oltdevicecard_fk = db.relationship('OltDevicesCardModels', backref='oltdevicecards', cascade="all, delete", passive_deletes=True, lazy=True)
     oltvlans_fk = db.relationship('OltDevicesVlansModels', backref='oltvlans', cascade="all, delete", passive_deletes=True, lazy=True)
-    
+    oltonuconfigured_fk = db.relationship('OltOnuConfiguredModels', backref='oltconfiguredonu', cascade="all, delete", passive_deletes=True, lazy=True)
 
     def __init__(
             self, 
@@ -202,8 +202,19 @@ class OltDevicesModels(db.Model):
             output = local_scope.get('output')  
         return output
     
+    def oltdevice_showlistonu(self, frame, slot, port):
+        from ooltcommands.models_showlistonu import OltCommandShowListOnuModel
+        script_python = OltCommandShowListOnuModel.query.filter_by(
+            id_software = self.id_software
+        ).first()
+        output = None
+        if script_python:
+            local_scope = {'self': self, 'frame':frame, 'slot':slot, 'port':port}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')  
+        return output
 
-    #OLT add addan
+    #OLT Sync
     def add_list_card(self):
         card_list_exists = self.show_list_card()
         card_list = self.oltdevice_showcard()
@@ -258,7 +269,7 @@ class OltDevicesModels(db.Model):
                 db.session.add(new_card)
                 db.session.commit()
                 new_card.add_list_cardpon()
-
+    
     def add_vlans(self):
         vlans_list_exists = self.show_list_vlans()
         vlans_list = self.oltdevice_showvlan()
@@ -298,6 +309,49 @@ class OltDevicesModels(db.Model):
                 db.session.add(new_vlan)
                 db.session.commit()
 
+    def sync_onu_configured_from_olt(self):
+        from ooltonu.models import OltOnuConfiguredModels
+
+        list_card = OltDevicesCardModels.query.filter_by(
+            id_device=self.id
+        ).all()
+
+        for _card in list_card:
+            card = _card.pon_info()
+            frame = card['frame']
+            slot = card['slot']
+            list_port = card['list_port']
+
+            for _port in list_port:
+                port = _port['port']
+                list_onu = self.oltdevice_showlistonu(frame, slot, port)
+
+                for onu in list_onu:
+                    onu_exists = OltOnuConfiguredModels.query.filter_by(
+                        id_device = self.id,
+                        id_card = _card.id,
+                        id_cardpon = _port['id'],
+                        id_cardpononu = onu['onu_id']
+                    ).first()
+                    if onu_exists:
+                        pass
+                    else:
+                        new_onu = OltOnuConfiguredModels(
+                            self.id,
+                            _card.id,
+                            _port['id'],
+                            onu['onu_id'],
+                            onu['sn'],
+                            onu['onu_type'],
+                            onu['name'],
+                            onu['description']
+                        )
+                        db.session.add(new_onu)
+                        db.session.commit()
+
+
+
+    #OLT add addan
     def add_uplink_vlantag(self, interface, vlan_tag):
         from ooltcommands.models_adduplinkvlan import OltCommandaddUplinkVlanModel
         script_python = OltCommandaddUplinkVlanModel.query.filter_by(
@@ -424,7 +478,7 @@ class OltDevicesCardModels(db.Model):
     last_update = db.Column(db.DateTime, nullable=False)
     oltcardpon_fk = db.relationship('OltDevicesCardPonModels', backref='oltcardpons', cascade="all, delete", passive_deletes=True, lazy=True)
     oltcarduplink_fk = db.relationship('OltDevicesCardUplinkModels', backref='oltcarduplink', cascade="all, delete", passive_deletes=True, lazy=True)
-    
+    oltcardonuconfigured_fk = db.relationship('OltOnuConfiguredModels', backref='oltcardonuconfigured', cascade="all, delete", passive_deletes=True, lazy=True)
 
     def __init__(self, id_device, frame_number, slot_number, jml_port, cfg_type, soft_ver, status, type_port, last_update):
         self.id_device = id_device
@@ -454,6 +508,7 @@ class OltDevicesCardModels(db.Model):
     def pon_info(self):
         data = {
             'id':self.id,
+            'frame':self.frame,
             'slot':self.slot,
             'type':self.cfg_type,
         }
@@ -549,6 +604,8 @@ class OltDevicesCardPonModels(db.Model):
     state = db.Column(db.String(255), nullable=False)
     status = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=True)
+    oltcardpononuconfigured_fk = db.relationship('OltOnuConfiguredModels', backref='oltcardpononuconfigured', cascade="all, delete", passive_deletes=True, lazy=True)
+
 
     def __init__(self, id_card, port, state, status, description=None):
         self.id_card = id_card
@@ -625,7 +682,6 @@ class OltDevicesCardUplinkModels(db.Model):
                 #if msg:
                 #    device_exists.add_vlans()
         return msg
-
 
 
 class OltDevicesVlansModels(db.Model):

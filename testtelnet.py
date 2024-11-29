@@ -1,42 +1,26 @@
-import pexpect
 import re
+import pexpect
+
 def telnet_to_olt(host, username, password, command, port):
     try:
-        # Mulai koneksi Telnet
         tn = pexpect.spawn(f'telnet {host} {port}')
-        
-        # Tangkap dan cetak output awal sebelum prompt login
         tn.expect('Username:', timeout=10)
-        #initial_output = tn.before.decode('ascii')
-        #print("Initial Output:")
-        #print(initial_output)
-        
-        # Kirim username
         tn.sendline(username)
-        
-        # Tunggu prompt Password dan kirim password
         tn.expect('Password:', timeout=10)
         tn.sendline(password)
-        
-        # Tunggu prompt dan kirim perintah
-        tn.expect('#', timeout=10)  # Asumsikan prompt akan berakhir dengan '#'
+        tn.expect('#', timeout=10)  # Assuming prompt ends with '#'
         tn.sendline(command)
+        output = ""
+        while True:
+            i = tn.expect(["--More--", "#"], timeout=300)
+            output += tn.before.decode('ascii')
+            if i == 0:  
+                tn.sendline("\r")  # Skip the "--More--" prompt
+            elif i == 1:
+                break
         
-        # Tangkap output dari command
-        tn.expect('#', timeout=10)
-        output = tn.before.decode('ascii')
-        
-        # Akhiri sesi Telnet
-        tn.sendline('exit')
-        pattern = r"Started before:\s+(\d+ days, \d+ hours, \d+ minutes)"
-        match = re.search(pattern, output.strip())
-
-        if match:
-            started_before = match.group(1)
-        else:
-            started_before = None
-
-        return started_before
+        tn.sendline("exit")
+        return output
     
     except pexpect.TIMEOUT:
         return "Error: Connection timed out."
@@ -47,91 +31,68 @@ def telnet_to_olt(host, username, password, command, port):
     except Exception as e:
         return str(e)
 
-# Konfigurasi
-host = "103.247.22.229"  # Ganti dengan IP OLT ZTE Anda
-username = "yayan"  # Ganti dengan username Anda
-password = "Yayan@12345"  # Ganti dengan password Anda
-command = "show system-group"
-port = 234  # Port Telnet
 
-# Eksekusi fungsi telnet
+def parse_olt_output(output):
+    parsed_data = {}
+    
+    # Extract interface name
+    interface_match = re.search(r"interface (\S+)", output)
+    if interface_match:
+        parsed_data["interface"] = interface_match.group(1)
+
+    # Extract name
+    name_match = re.search(r"name ([^\n]+)", output)
+    if name_match:
+        parsed_data["name"] = name_match.group(1).strip()
+
+    # Extract description
+    description_match = re.search(r"description ([^\n]+)", output)
+    if description_match:
+        parsed_data["description"] = description_match.group(1).strip()
+    
+    # Extract TCONT
+    parsed_data["tcont"] = []
+    tcont_matches = re.findall(r"tcont (\d+) name ([^\n]+)", output)
+    for tcont_id, tcont_name in tcont_matches:
+        parsed_data["tcont"].append({"id": int(tcont_id), "name": tcont_name.strip()})
+    
+    # Extract GEMPORT
+    parsed_data["gemport"] = []
+    gemport_matches = re.findall(r"gemport (\d+) name ([^\s]+) tcont (\d+)", output)
+    for gemport_id, gemport_name, tcont_id in gemport_matches:
+        parsed_data["gemport"].append({
+            "id": int(gemport_id),
+            "name": gemport_name.strip(),
+            "tcont_id": int(tcont_id)
+        })
+    
+    # Extract Service-Port
+    parsed_data["service_port"] = []
+    service_port_matches = re.findall(
+        r"service-port (\d+) vport (\d+) user-vlan (\d+) vlan (\d+)", output
+    )
+    for port_id, vport, user_vlan, vlan in service_port_matches:
+        parsed_data["service_port"].append({
+            "id": int(port_id),
+            "vport": int(vport),
+            "user_vlan": int(user_vlan),
+            "vlan": int(vlan)
+        })
+    
+    return parsed_data
+
+
+# Configuration
+host = "103.247.21.15"  # Replace with your OLT IP
+username = "yayan"  # Replace with your username
+password = "Yayan@12345"  # Replace with your password
+command = "show running-config interface gpon-onu_1/1/1:1"
+port = 234  # Telnet port
+
+# Telnet to OLT and parse output
 output = telnet_to_olt(host, username, password, command, port)
-print("Command Output:")
-print(output)
-
-
-# (venv) root@WebMailSSO:/opt/be-webmail# pip install pexpect
-# Collecting pexpect
-#   Downloading pexpect-4.9.0-py2.py3-none-any.whl.metadata (2.5 kB)
-# Collecting ptyprocess>=0.5 (from pexpect)
-#   Downloading ptyprocess-0.7.0-py2.py3-none-any.whl.metadata (1.3 kB)
-# Downloading pexpect-4.9.0-py2.py3-none-any.whl (63 kB)
-# Downloading ptyprocess-0.7.0-py2.py3-none-any.whl (13 kB)
-# Installing collected packages: ptyprocess, pexpect
-# Successfully installed pexpect-4.9.0 ptyprocess-0.7.0
-# (venv) root@WebMailSSO:/opt/be-webmail# nano testelnet.py
-# (venv) root@WebMailSSO:/opt/be-webmail# python testelnet.py
-# Initial Output:
-# Trying 103.247.22.229...
-# Connected to 103.247.22.229.
-# Escape character is '^]'.
-# ************************************************
-# Welcome to Arenjaya ZXAN product C320 of ZTE Corporation
-# ************************************************
-
-# Last login time is 08.31.2024-11:00:54-Asia/Jakarta, 0 authentication failures h
-# appened since that time.
-
-# Command Output:
-# show system-group
-# System Description: C320 Version V2.1.0 Software, Copyright (c) by ZTE Corporati
-# on Compiled
-# System ObjectId: .1.3.6.1.4.1.3902.1082.1001.320.2.1
-# Started before: 141 days, 15 hours, 25 minutes
-# Contact with: noc@wifian.id
-# System name:  OLT-C320-ARENJAYA
-# Location: Bekasi, Indonesia
-# System Info:  165  56d41deb
-# This system primarily offers a set of 78 services
-# OLT-C320-ARENJAYA
-# (venv) root@WebMailSSO:/opt/be-webmail# nano testelnet.py
-
-def telnet_to_olt(host, username, password, command, port):
-    import pexpect
-    try:
-        tn = pexpect.spawn(f'telnet {host} {port}')
-        tn.expect('Username:', timeout=10)
-        tn.sendline(username)
-        tn.expect('Password:', timeout=10)
-        tn.sendline(password)
-        tn.expect('#', timeout=10)  # Asumsikan prompt akan berakhir dengan '#'
-        tn.sendline(command)
-        tn.expect('#', timeout=10)
-        output = tn.before.decode('ascii')
-
-        tn.sendline('exit')
-        lines = output.strip().split("\n")
-        print(lines)
-        
-        return lines
-
-    except pexpect.TIMEOUT:
-        return {'Error': 'Connection timed out.'}
-
-    except pexpect.EOF:
-        return {'Error': 'Unexpected end of file encountered.'}
-
-    except Exception as e:
-        return str(e)
-
-# Konfigurasi
-host = "103.247.22.229"  # Ganti dengan IP OLT ZTE Anda
-username = "yayan"  # Ganti dengan username Anda
-password = "Yayan@12345"  # Ganti dengan password Anda
-command = "show interface gpon-olt_1/1/1"
-port = 234  # Port Telnet
-
-# Eksekusi fungsi telnet
-output = telnet_to_olt(host, username, password, command, port)
-print("Command Output:")
-print(output)
+if "Error" not in output:
+    parsed_data = parse_olt_output(output)
+    print(parsed_data)
+else:
+    print(output)

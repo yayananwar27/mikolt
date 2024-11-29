@@ -49,32 +49,36 @@ class SyncSiteApi(MethodResource, Resource):
 from extensions import scheduler
 def SyncSiteJob():
     with scheduler.app.app_context():
-        headers = {"X-SECRET-KEY":os.environ["ENIGMA_KEY"],"Accept":"application/json","Content-Type": "application/json"}
-        SiteUrl = 'locations'
-        #url = f"https://staging.idenigma.id/api/v1/{SiteUrl}"
-        #url = f"https://idenigma.id/api/v1/{SiteUrl}"
-        url = f"{os.environ['ENIGMA_URL']}"
+        x = int(repr(os.getpid())[-1])
+        if x == 2:
+            headers = {"X-SECRET-KEY":os.environ["ENIGMA_KEY"],"Accept":"application/json","Content-Type": "application/json"}
+            SiteUrl = 'locations'
+            #url = f"https://staging.idenigma.id/api/v1/{SiteUrl}"
+            #url = f"https://idenigma.id/api/v1/{SiteUrl}"
+            url = f"{os.environ['ENIGMA_URL']}"
 
 
-        session = requests.Session()
-        response = session.get(url, headers=headers, verify=True)
-        api_data = response.json()
-        ebillingsiteid = []
-        for data in api_data['data']:
-            ebillingsiteid.append(data['id'])
-            dataid_exists = SitesModel.query.filter_by(site_id=data['id']).first()
-            if dataid_exists:
-                dataid_exists.name = data['name']
-                dataid_exists.code = data['code']
-            else:
-                new_data = SitesModel(data['name'], data['id'], data['code'])
-                db.session.add(new_data)
-            
+            session = requests.Session()
+            response = session.get(url, headers=headers, verify=True)
+            api_data = response.json()
+            ebillingsiteid = []
+            for data in api_data['data']:
+                ebillingsiteid.append(data['id'])
+                dataid_exists = SitesModel.query.filter_by(site_id=data['id']).first()
+                if dataid_exists:
+                    dataid_exists.name = data['name']
+                    dataid_exists.code = data['code']
+                else:
+                    new_data = SitesModel(data['name'], data['id'], data['code'])
+                    db.session.add(new_data)
+                
+                db.session.commit()
+
+            dataid_exists = SitesModel.query.order_by(SitesModel.site_id.asc()).all()
+            for dataid in dataid_exists:
+                if dataid.site_id not in  ebillingsiteid:
+                    db.session.delete(dataid)
             db.session.commit()
-
-        dataid_exists = SitesModel.query.order_by(SitesModel.site_id.asc()).all()
-        for dataid in dataid_exists:
-            if dataid.site_id not in  ebillingsiteid:
-                db.session.delete(dataid)
-        db.session.commit()
-        current_app.logger.debug("Sync Site to E-Billing Site")
+            current_app.logger.debug("Sync Site to E-Billing Site")
+        else:
+            current_app.logger.info('PID {} skipping Site to E-Billing Sites'.format(x))
