@@ -52,18 +52,29 @@ def parse_olt_output(output):
     
     # Extract TCONT
     parsed_data["tcont"] = []
-    tcont_matches = re.findall(r"tcont (\d+) name ([^\n]+)", output)
-    for tcont_id, tcont_name in tcont_matches:
-        parsed_data["tcont"].append({"id": int(tcont_id), "name": tcont_name.strip()})
+    tcont_matches = re.findall(r"tcont (\d+) name ([^\s]+) profile ([^\s]+)", output)
+    for tcont_id, tcont_name, tcont_prof in tcont_matches:
+        parsed_data["tcont"].append({"id": int(tcont_id), "name": tcont_name.strip(), "profile": tcont_prof.strip()})
     
     # Extract GEMPORT
     parsed_data["gemport"] = []
     gemport_matches = re.findall(r"gemport (\d+) name ([^\s]+) tcont (\d+)", output)
+    gemport_matches_traffic = re.findall(r"gemport (\d+) traffic-limit upstream ([^\s]+) downstream ([^\s]+)", output)
     for gemport_id, gemport_name, tcont_id in gemport_matches:
+        upstream = None
+        downstream = None
+
+        for gemport_id2, _upstream, _downstream in gemport_matches_traffic:
+            if gemport_id == gemport_id2:
+                upstream = _upstream.strip()
+                downstream = _downstream.strip()
+
         parsed_data["gemport"].append({
             "id": int(gemport_id),
             "name": gemport_name.strip(),
-            "tcont_id": int(tcont_id)
+            "tcont_id": int(tcont_id),
+            "upstream":upstream,
+            "downstream":downstream
         })
     
     # Extract Service-Port
@@ -71,12 +82,21 @@ def parse_olt_output(output):
     service_port_matches = re.findall(
         r"service-port (\d+) vport (\d+) user-vlan (\d+) vlan (\d+)", output
     )
+    service_port_matches_desc = re.findall(
+        r"service-port (\d+) description ([^\s]+)", output
+    )
     for port_id, vport, user_vlan, vlan in service_port_matches:
+        desc = None
+        for port_id2, descr in service_port_matches_desc:
+            if port_id == port_id2:
+                desc = descr
+
         parsed_data["service_port"].append({
             "id": int(port_id),
             "vport": int(vport),
             "user_vlan": int(user_vlan),
-            "vlan": int(vlan)
+            "vlan": int(vlan),
+            "description": desc
         })
     
     return parsed_data

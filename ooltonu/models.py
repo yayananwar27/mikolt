@@ -21,6 +21,11 @@ class OltOnuConfiguredModels(db.Model):
     onu_type = db.Column(db.String(255), nullable=True)
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=True)
+    oltonutcont_fk = db.relationship('OltOnuTcontModels', backref='oltonutcont', cascade="all, delete", passive_deletes=True, lazy=True)
+    oltonugemport_fk = db.relationship('OltOnuGemportModels', backref='oltonugemport', cascade="all, delete", passive_deletes=True, lazy=True)
+    oltonuserviceport_fk = db.relationship('OltOnuServicePortModels', backref='oltonuserviceport', cascade="all, delete", passive_deletes=True, lazy=True)
+    #oltonuhistory_fk = db.relationship('OltOnuHistoryRawRunningModels', backref='oltonuhistoryrawrunning', cascade="all, delete", passive_deletes=True, lazy=True)
+
 
     def __init__(self, id_device, id_card, id_cardpon, id_cardpononu, sn, onu_type, name, description=None):
         self.id_device = id_device
@@ -65,3 +70,164 @@ class OltOnuConfiguredModels(db.Model):
             'description':self.description
         }
         return data
+    
+    def info_to_dict(self):
+        from ooltdevices.models import OltDevicesModels
+        get_name_device = OltDevicesModels.query.filter_by(id=self.id_device).first()
+        name_device = get_name_device.name
+        id_site = get_name_device.id_site
+
+        from ooltdevices.models import OltDevicesCardModels
+        get_cardframeslot = OltDevicesCardModels.query.filter_by(id=self.id_card).first()
+
+        from ooltdevices.models import OltDevicesCardPonModels
+        get_cardponport = OltDevicesCardPonModels.query.filter_by(id=self.id_cardpon).first()
+
+        gpon_onu = 'gpon-onu_{0}/{1}/{2}:{3}'.format(get_cardframeslot.frame, get_cardframeslot.slot, get_cardponport.port, self.id_cardpononu)
+        
+        from sites.models import SitesModel
+        get_site = SitesModel.query.filter_by(site_id=id_site).first()
+
+        list_tcont=[]
+        list_gemport=[]
+        list_service_port=[]
+
+        _list_tcont = OltOnuTcontModels.query.filter_by(
+            id_onu=self.id
+        ).all()
+        for tcont in _list_tcont:
+            list_tcont.append(tcont.to_dict())
+
+
+        _list_gemport = OltOnuGemportModels.query.filter_by(
+            id_onu=self.id
+        ).all()
+        for gem in _list_gemport:
+            list_gemport.append(gem.to_dict())
+
+        _list_sp = OltOnuServicePortModels.query.filter_by(
+            id_onu=self.id
+        ).all()
+        for sp in _list_sp:
+            list_service_port.append(sp.to_dict())
+
+        data = {
+            'id':self.id,
+            'id_device':self.id_device,
+            'name_device':name_device,
+            'id_card':self.id_card,
+            'id_cardpon':self.id_cardpon,
+            'id_cardpononu':self.id_cardpononu,
+            'onu':gpon_onu,
+            'sn':self.sn,
+            'onu_type':self.onu_type,
+            'site_id': id_site,
+            'site_name':get_site.name,
+            'name':self.name,
+            'description':self.description,
+            'list_tcont':list_tcont,
+            'list_gemport':list_gemport,
+            'list_service_port':list_service_port
+        }
+        return data
+    
+class OltOnuTcontModels(db.Model):
+    __tablename__ = 'oltonutcont'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_onu = db.Column(db.Integer, db.ForeignKey('oltonuconfigured.id', ondelete='CASCADE'), nullable=False)
+    tcont_id = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    profile = db.Column(db.String(255), nullable=False)
+
+    def __init__(self, id_onu, tcont_id, name, profile):
+        self.id_onu = id_onu
+        self.tcont_id = tcont_id
+        self.name = name
+        self.profile = profile
+
+    def to_dict(self):
+        data = {
+            'id':self.id, 
+            'id_onu':self.id_onu,
+            'tcont_id':self.tcont_id,
+            'name':self.name,
+            'profile':self.profile
+        }
+        return data
+
+class OltOnuGemportModels(db.Model):
+    __tablename__ = 'oltonugemport'  
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_onu = db.Column(db.Integer, db.ForeignKey('oltonuconfigured.id', ondelete='CASCADE'), nullable=False)
+    gemport_id = db.Column(db.Integer, nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    tcont_id = db.Column(db.Integer, nullable=False)
+    upstream = db.Column(db.Integer, nullable=True)
+    downstream = db.Column(db.Integer, nullable=True)
+
+    def __init__(self, id_onu, gemport_id, name, tcont_id, upstream=None, downstream=None):
+        self.id_onu = id_onu
+        self.gemport_id = gemport_id
+        self.name = name
+        self.tcont_id = tcont_id
+        self.upstream = upstream
+        self.downstream = downstream
+
+    def to_dict(self):
+        data = {
+            'id':self.id,
+            'id_onu':self.id_onu,
+            'gemport_id':self.gemport_id,
+            'name':self.name,
+            'tcont_id':self.tcont_id,
+            'upstream':self.upstream,
+            'downstream':self.downstream
+        }
+        return data
+
+class OltOnuServicePortModels(db.Model):
+    __tablename__ = 'oltonuserviceport'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_onu = db.Column(db.Integer, db.ForeignKey('oltonuconfigured.id', ondelete='CASCADE'), nullable=False)
+    service_id = db.Column(db.Integer, nullable=False)
+    vport = db.Column(db.Integer, nullable=False)
+    vlan = db.Column(db.Integer, nullable=False)
+    description = db.Column(db.String(255), nullable=True)
+
+    def __init__(self, id_onu, service_id, vport, vlan, desc=None):
+        self.id_onu = id_onu
+        self.service_id = service_id
+        self.vport = vport
+        self.vlan = vlan
+        self.description = desc
+
+    def to_dict(self):
+        data = {
+            'id':self.id,
+            'id_onu':self.id_onu,
+            'service_id':self.service_id,
+            'vport':self.vport,
+            'vlan':self.vlan,
+            'description':self.description
+        }
+        return data
+
+# class OltOnuHistoryRawRunningModels(db.Model):
+#     __tablename__ = 'oltonuhistoryrawrunning'
+#     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+#     id_onu = db.Column(db.Integer, db.ForeignKey('oltonuconfigured.id', ondelete='CASCADE'), nullable=False)
+#     status = 
+#     duration = 
+#     distance = 
+#     olt_rx = 
+#     onu_rx = 
+#     input_rate = 
+#     output_rate =
+#     mac_list = 
+#     running_int_config_history = 
+#     running_pon_config_history = 
+#     running_uptime_history = 
+#     running_power_history =
+#     running_bw_history = 
+#     running_mac_history = 
+#     timestamp =

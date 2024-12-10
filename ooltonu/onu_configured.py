@@ -15,6 +15,9 @@ from userlogin.models import AllowedSiteUserModel
 
 from ooltdevices.models import OltDevicesModels
 
+class IdOnuConfiguredSchema(Schema):
+    id = fields.Integer(metadata={'description':'id record'})
+
 class OnuConfiguredSchema(Schema):
     id = fields.Integer(metadata={'description':'id record'})
     id_device = fields.Integer(metadata={'description':'id record device'})
@@ -96,3 +99,36 @@ class OnuConfiguredApi(MethodResource, Resource):
             'per_page': pagination.per_page,
             'data': _data
         })
+    
+
+class InfoOnuConfiguredApi(MethodResource, Resource):
+    @doc(description='Info Onu configured', tags=['OLT Onu'], security=[{"ApiKeyAuth": []}])
+    @use_kwargs(IdOnuConfiguredSchema, location=('json'))
+    @auth.login_required(role=['api','noc', 'superadmin', 'teknisi','admin'])
+    def post(self, **kwargs):
+        operator = auth.current_user()
+        list_device = []
+        
+        if operator.role in ['teknisi','admin']:
+            allowed_site = AllowedSiteUserModel.query.filter_by(username=operator.username).all()
+            list_allowed = []
+            for _allowed in allowed_site:
+                list_allowed.append(_allowed.site_id)
+            device_list = OltDevicesModels.query.filter(
+                OltDevicesModels.id_site.in_(list_allowed)
+            ).all()
+            for _allowed in device_list:
+                list_device.append(_allowed.id)
+        else:
+            device_list = OltDevicesModels.query.all()
+            for _allowed in device_list:
+                list_device.append(_allowed.id)
+
+        id_onu = kwargs['id']
+        data_onu = OltOnuConfiguredModels.query.filter(
+                OltOnuConfiguredModels.id_device.in_(list_device)
+            ).filter_by(id=id_onu).first()
+        
+        data = data_onu.info_to_dict()
+        return jsonify(data)
+
