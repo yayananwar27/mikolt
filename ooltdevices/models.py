@@ -214,6 +214,18 @@ class OltDevicesModels(db.Model):
             output = local_scope.get('output')  
         return output
 
+    def oltdevice_showonustatus(self, gpon_onu):
+        from ooltcommands.models_showonustatus import OltCommandShowOnuStatusModel
+        script_python = OltCommandShowOnuStatusModel.query.filter_by(
+            id_software = self.id_software
+        ).first()
+        output = None
+        if script_python:
+            local_scope = {'self': self, 'gpon_onu':gpon_onu}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')  
+        return output
+
     #OLT Sync
     def add_list_card(self):
         card_list_exists = self.show_list_card()
@@ -310,7 +322,7 @@ class OltDevicesModels(db.Model):
                 db.session.commit()
 
     def sync_onu_configured_from_olt(self):
-        from ooltonu.models import OltOnuConfiguredModels, OltOnuServiceVlansModels
+        from ooltonu.models import OltOnuConfiguredModels, OltOnuServiceVlansModels, OltOnuStatusHistoryModels
 
         list_card = OltDevicesCardModels.query.filter_by(
             id_device=self.id
@@ -335,6 +347,25 @@ class OltDevicesModels(db.Model):
                     ).first()
                     if onu_exists:
                         onu_id=onu_exists.id
+                        _onu = onu_exists.to_dict()
+                        status = self.oltdevice_showonustatus(_onu['onu'])
+                        new_status = OltOnuStatusHistoryModels(
+                            onu_id,
+                            status['olt_rx'],
+                            status['onu_rx'],
+                            status['onu_state'],
+                            status['onu_range'],
+                            status['onu_online'],
+                            status['onu_byte_input'],
+                            status['onu_byte_output'],
+                            status['onu_packet_input'],
+                            status['onu_packet_output'],
+                            str(status['onu_list_mac']),
+                            status['raw_info']
+                        )
+                        db.session.add(new_status)
+                        db.session.commit()
+                        
                     else:
                         new_onu = OltOnuConfiguredModels(
                             self.id,
@@ -349,6 +380,25 @@ class OltDevicesModels(db.Model):
                         db.session.add(new_onu)
                         db.session.commit()
                         onu_id = new_onu.id
+
+                        _onu = new_onu.to_dict()
+                        status = self.oltdevice_showonustatus(_onu['onu'])
+                        new_status = OltOnuStatusHistoryModels(
+                            onu_id,
+                            status['olt_rx'],
+                            status['onu_rx'],
+                            status['onu_state'],
+                            status['onu_range'],
+                            status['onu_online'],
+                            status['onu_byte_input'],
+                            status['onu_byte_output'],
+                            status['onu_packet_input'],
+                            status['onu_packet_output'],
+                            str(status['onu_list_mac']),
+                            status['raw_info']
+                        )
+                        db.session.add(new_status)
+                        db.session.commit()
 
                     json_onu = onu['json_runningonu']
                     #current_app.logger.info(json_onu)
@@ -385,66 +435,6 @@ class OltDevicesModels(db.Model):
                             db.session.add(new_servicevlan)
                             db.session.commit()
                     
-                        
-
-                    # for tcont in list_tcont:
-                    #     exists_tcont = OltOnuTcontModels.query.filter_by(
-                    #         id_onu=onu_id, 
-                    #         tcont_id=tcont['id']
-                    #     ).first()
-                    #     if exists_tcont:
-                    #         pass
-                    #     else:
-                    #         new_tcont = OltOnuTcontModels(
-                    #             onu_id,
-                    #             tcont['id'],
-                    #             tcont['name'],
-                    #             tcont['profile']
-                    #         )
-                    #         db.session.add(new_tcont)
-                    #         db.session.commit()
-
-                    
-                    # for gemport in list_gemport:
-                    #     exists_gemport = OltOnuGemportModels.query.filter_by(
-                    #         id_onu=onu_id,
-                    #         gemport_id=gemport['id'],
-                    #         tcont_id=gemport['tcont_id']
-                    #     ).first()
-                    #     if exists_gemport:
-                    #         pass
-                    #     else:
-                    #         new_gemport = OltOnuGemportModels(
-                    #             onu_id,
-                    #             gemport['id'],
-                    #             gemport['name'],
-                    #             gemport['tcont_id'],
-                    #             gemport['upstream'],
-                    #             gemport['downstream']
-                    #         )
-                    #         db.session.add(new_gemport)
-                    #         db.session.commit()
-
-                    
-                    # for service_port in list_service_port:
-                    #     exists_service_port = OltOnuServicePortModels.query.filter_by(
-                    #         id_onu=onu_id,
-                    #         service_id=service_port['id'],
-                    #         vport=service_port['vport']
-                    #     ).first()
-                    #     if exists_service_port:
-                    #         pass
-                    #     else:
-                    #         new_service = OltOnuServicePortModels(
-                    #             onu_id,
-                    #             service_port['id'],
-                    #             service_port['vport'],
-                    #             service_port['vlan'],
-                    #             service_port['description']
-                    #         )
-                    #         db.session.add(new_service)
-                    #         db.session.commit()
-
 
     #OLT add addan
     def add_uplink_vlantag(self, interface, vlan_tag):

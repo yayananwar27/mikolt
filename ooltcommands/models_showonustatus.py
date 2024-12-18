@@ -1,3 +1,32 @@
+from config import db, event
+
+def init_db(app):
+    with app.app_context():
+        db.create_all()
+
+
+class OltCommandShowOnuStatusModel(db.Model):
+    __tablename__ = 'oltcommandshowonustatus'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_software = db.Column(db.Integer, db.ForeignKey('oltsoftware.id', ondelete='CASCADE'), nullable=False)
+    script_python = db.Column(db.Text, nullable=False)
+
+    def __init__(self, id_software, script_python):
+        self.id_software = id_software
+        self.script_python = script_python
+
+    def to_dict(self):
+        return {
+            'id':self.id,
+            'id_software':self.id_software,
+            'script_python':self.script_python
+        }
+    
+# Fungsi untuk memasukkan data awal
+def insert_initial_data(*args, **kwargs):
+    showonustatus_software_1 = OltCommandShowOnuStatusModel(
+        id_software=1, 
+        script_python='''
 def telnet_to_olt(host, username, password, port_telnet, command_power, command_info, command_stats, command_mac):
     import pexpect
     try:
@@ -7,7 +36,7 @@ def telnet_to_olt(host, username, password, port_telnet, command_power, command_
                 lines[-1] = new_line
             else:
                 lines.append(new_line)
-            return "\n".join(lines)
+            return "\\n".join(lines)
         
         tn = pexpect.spawn(f'telnet {host} {port_telnet}')
         tn.setwinsize(1000, 1000)
@@ -20,26 +49,26 @@ def telnet_to_olt(host, username, password, port_telnet, command_power, command_
         tn.sendline(command_power)
         tn.expect('#', timeout=10)
         output += tn.before.decode('ascii')
-        output = replace_last_line(output, '\n')
-        output += '\n\n\n'
+        output = replace_last_line(output, '\\n')
+        output += '\\n\\n'
 
         tn.sendline(command_info)
         tn.expect('#', timeout=10)
         output += tn.before.decode('ascii')
-        output = replace_last_line(output, '\n')
-        output += '\n\n\n'
+        output = replace_last_line(output, '\\n')
+        output += '\\n\\n'
 
         tn.sendline(command_stats)
         tn.expect('#', timeout=10)
         output += tn.before.decode('ascii')
-        output = replace_last_line(output, '\n')
-        output += '\n\n\n'
+        output = replace_last_line(output, '\\n')
+        output += '\\n\\n'
 
         tn.sendline(command_mac)
         tn.expect('#', timeout=10)
         output += tn.before.decode('ascii')
-        output = replace_last_line(output, '\n')
-        output += '\n\n\n'
+        output = replace_last_line(output, '\\n')
+        output += '\\n\\n'
 
         tn.sendline("exit")
 
@@ -57,11 +86,11 @@ def telnet_to_olt(host, username, password, port_telnet, command_power, command_
 
 
 # Configuration
-host = "103.247.21.15"  # Replace with your OLT IP
-username = "yayan"  # Replace with your username
-password = "Yayan@12345"  # Replace with your password
-port_telnet = 234  # Telnet port
-onu = 'gpon-onu_1/1/1:1'
+host = self.host  # Replace with your OLT IP
+username = self.telnet_user  # Replace with your username
+password = self.telnet_pass # Replace with your password
+port_telnet = self.telnet_port  # Telnet port
+onu = gpon_onu
 command_power = f'show pon power attenuation {onu}'
 command_info = f'show gpon onu detail-info {onu}'
 command_stats = f'show interface {onu}'
@@ -91,7 +120,7 @@ def parse_data(raw_data):
     data['onu_range'] = onu_range_match.group(1) if onu_range_match else None
 
     # Parse ONU Online Duration
-    onu_online_match = re.search(r"Online Duration:\s*(.+?)\n", raw_data)
+    onu_online_match = re.search(r"Online Duration:\s*(.+?)\\n", raw_data)
     data['onu_online'] = onu_online_match.group(1) if onu_online_match else None
 
     # Parse ONU Bytes Input
@@ -118,4 +147,9 @@ def parse_data(raw_data):
 
 output = parse_data(raw_data)
 output['raw_info'] = raw_data
-print(output)
+''')
+    
+    db.session.add(showonustatus_software_1)
+    db.session.commit()
+
+event.listen(OltCommandShowOnuStatusModel.__table__, 'after_create', insert_initial_data)

@@ -7,7 +7,7 @@ from sqlalchemy import or_, and_
 
 from accessapp.authapp import auth
 
-from .models import db, OltOnuConfiguredModels
+from .models import db, OltOnuConfiguredModels, OltOnuStatusHistoryModels
 
 from logmikolt.model import MikoltLoggingModel
 from sites.models import SitesModel
@@ -132,3 +132,37 @@ class InfoOnuConfiguredApi(MethodResource, Resource):
         data = data_onu.info_to_dict()
         return jsonify(data)
 
+class InfoOnuConfiguredStatusRawApi(MethodResource, Resource):
+    @doc(description='Info Onu configured Status RAW', tags=['OLT Onu'], security=[{"ApiKeyAuth": []}])
+    @use_kwargs(IdOnuConfiguredSchema, location=('json'))
+    @auth.login_required(role=['api','noc', 'superadmin', 'teknisi','admin'])
+    def post(self, **kwargs):
+        operator = auth.current_user()
+        list_device = []
+        
+        if operator.role in ['teknisi','admin']:
+            allowed_site = AllowedSiteUserModel.query.filter_by(username=operator.username).all()
+            list_allowed = []
+            for _allowed in allowed_site:
+                list_allowed.append(_allowed.site_id)
+            device_list = OltDevicesModels.query.filter(
+                OltDevicesModels.id_site.in_(list_allowed)
+            ).all()
+            for _allowed in device_list:
+                list_device.append(_allowed.id)
+        else:
+            device_list = OltDevicesModels.query.all()
+            for _allowed in device_list:
+                list_device.append(_allowed.id)
+
+        id_onu = kwargs['id']
+        data_onu = OltOnuConfiguredModels.query.filter(
+                OltOnuConfiguredModels.id_device.in_(list_device)
+            ).filter_by(id=id_onu).first()
+        
+        raw_status = OltOnuStatusHistoryModels.query.filter_by(
+            id_onu=data_onu.id
+        ).order_by(OltOnuStatusHistoryModels.timestamp.desc()).first()
+        
+        data = raw_status.out_raw()
+        return jsonify(data)
