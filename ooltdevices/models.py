@@ -310,7 +310,7 @@ class OltDevicesModels(db.Model):
                 db.session.commit()
 
     def sync_onu_configured_from_olt(self):
-        from ooltonu.models import OltOnuConfiguredModels, OltOnuTcontModels, OltOnuGemportModels, OltOnuServicePortModels
+        from ooltonu.models import OltOnuConfiguredModels, OltOnuServiceVlansModels
 
         list_card = OltDevicesCardModels.query.filter_by(
             id_device=self.id
@@ -353,63 +353,97 @@ class OltDevicesModels(db.Model):
                     json_onu = onu['json_runningonu']
                     #current_app.logger.info(json_onu)
                     list_tcont = json_onu['tcont']
+                    list_gemport = json_onu['gemport']
+                    list_service_port = json_onu['service_port']
                     for tcont in list_tcont:
-                        exists_tcont = OltOnuTcontModels.query.filter_by(
+                        exists_tcont = OltOnuServiceVlansModels.query.filter_by(
                             id_onu=onu_id, 
-                            tcont_id=tcont['id']
+                            service_id=tcont['id']
                         ).first()
                         if exists_tcont:
                             pass
                         else:
-                            new_tcont = OltOnuTcontModels(
+                            for service_port in list_service_port:
+                                if service_port['id'] == tcont['id']:
+                                    vlan = service_port['vlan']
+                                    name = service_port['description']
+                            for gemport in list_gemport:
+                                if gemport['id'] == tcont['id']:
+                                    traffic_upstream = gemport['upstream']
+                                    traffic_downstream = gemport['downstream']
+                                    
+
+                            new_servicevlan = OltOnuServiceVlansModels(
                                 onu_id,
                                 tcont['id'],
-                                tcont['name'],
-                                tcont['profile']
+                                tcont['profile'],
+                                vlan,
+                                name,
+                                traffic_upstream,
+                                traffic_downstream
                             )
-                            db.session.add(new_tcont)
+                            db.session.add(new_servicevlan)
                             db.session.commit()
+                    
+                        
 
-                    list_gemport = json_onu['gemport']
-                    for gemport in list_gemport:
-                        exists_gemport = OltOnuGemportModels.query.filter_by(
-                            id_onu=onu_id,
-                            gemport_id=gemport['id'],
-                            tcont_id=gemport['tcont_id']
-                        ).first()
-                        if exists_gemport:
-                            pass
-                        else:
-                            new_gemport = OltOnuGemportModels(
-                                onu_id,
-                                gemport['id'],
-                                gemport['name'],
-                                gemport['tcont_id'],
-                                gemport['upstream'],
-                                gemport['downstream']
-                            )
-                            db.session.add(new_gemport)
-                            db.session.commit()
+                    # for tcont in list_tcont:
+                    #     exists_tcont = OltOnuTcontModels.query.filter_by(
+                    #         id_onu=onu_id, 
+                    #         tcont_id=tcont['id']
+                    #     ).first()
+                    #     if exists_tcont:
+                    #         pass
+                    #     else:
+                    #         new_tcont = OltOnuTcontModels(
+                    #             onu_id,
+                    #             tcont['id'],
+                    #             tcont['name'],
+                    #             tcont['profile']
+                    #         )
+                    #         db.session.add(new_tcont)
+                    #         db.session.commit()
 
-                    list_service_port = json_onu['service_port']
-                    for service_port in list_service_port:
-                        exists_service_port = OltOnuServicePortModels.query.filter_by(
-                            id_onu=onu_id,
-                            service_id=service_port['id'],
-                            vport=service_port['vport']
-                        ).first()
-                        if exists_service_port:
-                            pass
-                        else:
-                            new_service = OltOnuServicePortModels(
-                                onu_id,
-                                service_port['id'],
-                                service_port['vport'],
-                                service_port['vlan'],
-                                service_port['description']
-                            )
-                            db.session.add(new_service)
-                            db.session.commit()
+                    
+                    # for gemport in list_gemport:
+                    #     exists_gemport = OltOnuGemportModels.query.filter_by(
+                    #         id_onu=onu_id,
+                    #         gemport_id=gemport['id'],
+                    #         tcont_id=gemport['tcont_id']
+                    #     ).first()
+                    #     if exists_gemport:
+                    #         pass
+                    #     else:
+                    #         new_gemport = OltOnuGemportModels(
+                    #             onu_id,
+                    #             gemport['id'],
+                    #             gemport['name'],
+                    #             gemport['tcont_id'],
+                    #             gemport['upstream'],
+                    #             gemport['downstream']
+                    #         )
+                    #         db.session.add(new_gemport)
+                    #         db.session.commit()
+
+                    
+                    # for service_port in list_service_port:
+                    #     exists_service_port = OltOnuServicePortModels.query.filter_by(
+                    #         id_onu=onu_id,
+                    #         service_id=service_port['id'],
+                    #         vport=service_port['vport']
+                    #     ).first()
+                    #     if exists_service_port:
+                    #         pass
+                    #     else:
+                    #         new_service = OltOnuServicePortModels(
+                    #             onu_id,
+                    #             service_port['id'],
+                    #             service_port['vport'],
+                    #             service_port['vlan'],
+                    #             service_port['description']
+                    #         )
+                    #         db.session.add(new_service)
+                    #         db.session.commit()
 
 
     #OLT add addan

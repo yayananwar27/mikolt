@@ -144,6 +144,11 @@ def parse_olt_output2(output):
     for tcont_id, tcont_name, tcont_prof in tcont_matches:
         parsed_data["tcont"].append({"id": int(tcont_id), "name": tcont_name.strip(), "profile": tcont_prof.strip()})
     
+    tcont_matches_noname = re.findall(r"tcont (\d+) profile ([^\s]+)", output)
+    for tcont_id, tcont_prof in tcont_matches_noname:
+        parsed_data["tcont"].append({"id": int(tcont_id), "name": None, "profile": tcont_prof.strip()})
+    
+        
     
     # Extract GEMPORT
     parsed_data["gemport"] = []
@@ -161,6 +166,25 @@ def parse_olt_output2(output):
         parsed_data["gemport"].append({
             "id": int(gemport_id),
             "name": gemport_name.strip(),
+            "tcont_id": int(tcont_id),
+            "upstream":upstream,
+            "downstream":downstream
+        })
+
+    gemport_matches_nonames = re.findall(r"gemport (\d+) tcont (\d+)", output)
+    gemport_matches_traffic_nonames = re.findall(r"gemport (\d+) traffic-limit upstream ([^\s]+) downstream ([^\s]+)", output)
+    for gemport_id, tcont_id in gemport_matches_nonames:
+        upstream = None
+        downstream = None
+
+        for gemport_id2, _upstream, _downstream in gemport_matches_traffic:
+            if gemport_id == gemport_id2:
+                upstream = _upstream.strip()
+                downstream = _downstream.strip()
+
+        parsed_data["gemport"].append({
+            "id": int(gemport_id),
+            "name": None,
             "tcont_id": int(tcont_id),
             "upstream":upstream,
             "downstream":downstream
