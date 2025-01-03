@@ -4,7 +4,7 @@ def init_db(app):
     with app.app_context():
         db.create_all()
 
-from datetime import datetime
+from datetime import datetime, timedelta
 def created_time():
     dt_now = datetime.now()
     date = dt_now.strftime("%Y-%m-%d %H:%M:%S")
@@ -321,8 +321,8 @@ class OltDevicesModels(db.Model):
                 db.session.add(new_vlan)
                 db.session.commit()
 
-    def sync_onu_configured_from_olt(self):
-        from ooltonu.models import OltOnuConfiguredModels, OltOnuServiceVlansModels, OltOnuStatusHistoryModels
+    def sync_onu_configured_from_olt(self, operator='scheduler'):
+        from ooltonu.models import OltOnuConfiguredModels, OltOnuServiceVlansModels, OltOnuStatusHistoryModels, OltOnuLoggingModels
 
         list_card = OltDevicesCardModels.query.filter_by(
             id_device=self.id
@@ -379,9 +379,19 @@ class OltDevicesModels(db.Model):
                         )
                         db.session.add(new_onu)
                         db.session.commit()
-                        onu_id = new_onu.id
 
+                        onu_id = new_onu.id
                         _onu = new_onu.to_dict()
+                        
+                        new_logging = OltOnuLoggingModels(
+                            onu_id, 
+                            operator, 
+                            'imported',
+                            str(_onu)
+                            )
+                        db.session.add(new_logging)
+                        db.session.commit()
+
                         status = self.oltdevice_showonustatus(_onu['onu'])
                         new_status = OltOnuStatusHistoryModels(
                             onu_id,
@@ -435,6 +445,45 @@ class OltDevicesModels(db.Model):
                             db.session.add(new_servicevlan)
                             db.session.commit()
                     
+    def Get_onu_status_history(self, onu_id=None):
+        from ooltonu.models import OltOnuConfiguredModels, OltOnuStatusHistoryModels
+        if onu_id != None:
+            list_onu = OltOnuConfiguredModels.query.filter_by(id_device=self.id, id=onu_id).all()
+        else:
+            list_onu = OltOnuConfiguredModels.query.filter_by(id_device=self.id).all()
+        
+        for onu in list_onu:
+            _onu = onu.to_dict()
+            try:
+                status = self.oltdevice_showonustatus(_onu['onu'])
+                new_status = OltOnuStatusHistoryModels(
+                    _onu['id'],
+                    status['olt_rx'],
+                    status['onu_rx'],
+                    status['onu_state'],
+                    status['onu_range'],
+                    status['onu_online'],
+                    status['onu_byte_input'],
+                    status['onu_byte_output'],
+                    status['onu_packet_input'],
+                    status['onu_packet_output'],
+                    str(status['onu_list_mac']),
+                    status['raw_info']
+                )
+            except:
+                new_status = OltOnuStatusHistoryModels(
+                    id_onu=_onu['id'], onu_state='missing'
+                )
+            db.session.add(new_status)
+            db.session.commit()
+
+            threshold_days = datetime.now() - timedelta(days=30)
+            old_records = OltOnuStatusHistoryModels.query.filter(OltOnuStatusHistoryModels.timestamp < threshold_days).all()
+            for old_record in old_records:
+                record = OltOnuStatusHistoryModels.query.filter_by(id=old_record.id).first()
+                if record:
+                    db.session.delete(record)
+                    db.session.commit()
 
     #OLT add addan
     def add_uplink_vlantag(self, interface, vlan_tag):

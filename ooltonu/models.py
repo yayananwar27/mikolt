@@ -21,8 +21,10 @@ class OltOnuConfiguredModels(db.Model):
     onu_type = db.Column(db.String(255), nullable=True)
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.String(255), nullable=True)
-    oltonuservicevlans_fk = db.relationship('OltOnuServiceVlansModels', backref='oltonuservicevlans', cascade="all, delete", passive_deletes=True, lazy=True)
-    
+    oltonuservicevlans_fk = db.relationship('OltOnuServiceVlansModels', backref='oltonuservicevlans', cascade="all, delete", passive_deletes=True, lazy='dynamic')
+    oltonuhistory_fk = db.relationship('OltOnuStatusHistoryModels', backref='oltonuhistory', cascade="all, delete", passive_deletes=True, lazy='dynamic')
+    oltonuhistory_fk = db.relationship('OltOnuStatusHistoryModels', backref='oltonuhistory', cascade="all, delete", passive_deletes=True, lazy='dynamic')
+
 
     def __init__(self, id_device, id_card, id_cardpon, id_cardpononu, sn, onu_type, name, description=None):
         self.id_device = id_device
@@ -68,7 +70,6 @@ class OltOnuConfiguredModels(db.Model):
         }
         return data
     
-
     def info_to_dict(self):
         from ooltdevices.models import OltDevicesModels
         get_name_device = OltDevicesModels.query.filter_by(id=self.id_device).first()
@@ -120,6 +121,17 @@ class OltOnuConfiguredModels(db.Model):
         data.update(info_data)
         return data
 
+    def update_status(self):
+        from ooltdevices.models import OltDevicesModels
+        device = OltDevicesModels.query.filter_by(id=self.id_device).first()
+        try:
+            if device:
+                device.Get_onu_status_history(onu_id=self.id)
+                return True
+            else:    
+                return False
+        except:
+            return False
 
 class OltOnuServiceVlansModels(db.Model):
     __tablename__ = 'oltonuservicevlans'
@@ -221,5 +233,32 @@ class OltOnuStatusHistoryModels(db.Model):
     def out_raw(self):
         data = {
             'data':self.show_status_raw
+        }
+        return data
+
+class OltOnuLoggingModels(db.Model):
+    __tablename__ = 'oltonulogging'
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    id_onu = db.Column(db.Integer, db.ForeignKey('oltonuconfigured.id', ondelete='CASCADE'), nullable=False)
+    action = db.Column(db.String(100), nullable=False)
+    user = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    timestamp = db.Column(db.DateTime, nullable=False)
+
+    def __init__(self, id_onu, user, action, description=None):
+        self.id_onu = id_onu
+        self.user = user
+        self.action = action
+        self.description = description
+        self.timestamp = created_time()
+
+    def to_dict(self):
+        data = {
+            'id':self.id,
+            'id_onu':self.id_onu,
+            'action':self.action,
+            'user':self.user,
+            'description':self.description,
+            'timestamp':str(self.timestamp)
         }
         return data

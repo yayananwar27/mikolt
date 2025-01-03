@@ -85,6 +85,7 @@ class OltDeviceapi(MethodResource, Resource):
 
         new_name.add_list_card()
         new_name.add_vlans()
+        #new_name.sync_onu_configured_from_olt()
 
         new_logging = MikoltLoggingModel(
             operator.username, 

@@ -19,3 +19,26 @@ def init_docs(docs):
     docs.register(InfoOnuConfiguredApi, blueprint= 'oltonu_api')
     docs.register(SyncOnuConfiguredFromOltApi, blueprint= 'oltonu_api')
     docs.register(InfoOnuConfiguredStatusRawApi, blueprint= 'oltonu_api')
+
+
+from dotenv import load_dotenv
+import os
+load_dotenv()
+from extensions import scheduler
+from .job_onufromolt import SyncOnuFromOlt, GetOnuStatusFromOlt
+
+scheduler.add_job(func=SyncOnuFromOlt,
+        trigger="interval",
+        seconds=int(os.environ["INTERVAL_GET_ONU_FROM_OLT"]),
+        id="SyncOnuFromOlt_job",
+        name="SyncOnuFromOlt_job", 
+        misfire_grace_time=60,
+        replace_existing=False)
+
+scheduler.add_job(func=GetOnuStatusFromOlt,
+        trigger="interval",
+        seconds=int(os.environ["INTERVAL_GET_ONUSTATUS_FROM_OLT"]),
+        id="GetStatsOnuFromOlt_job",
+        name="GetStatsOnuFromOlt_job", 
+        misfire_grace_time=60,
+        replace_existing=False)
