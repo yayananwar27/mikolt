@@ -17,5 +17,8 @@ routeros_api
 pyjwt
 requests
 Flask-APScheduler
+openpyxl
+pandas
 gunicorn
 pexpect
+easysnmp

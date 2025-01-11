@@ -93,6 +93,8 @@ from ooltcommands.models_showcardonutype import init_db as init_db_oltcommand_sh
 from ooltcommands.models_showvlan import init_db as init_db_oltcommand_showvlan
 from ooltcommands.models_showlistonu import init_db as init_db_oltcommand_showlistonu
 from ooltcommands.models_showonustatus import init_db as init_db_oltcommand_showonustatus
+from ooltcommands.models_showonustatussnmp import init_db as init_db_oltcommand_showonustatussnmp
+
 
 from ooltcommands.models_adddevicevlan import init_db as init_db_adddevicevlan
 from ooltcommands.models_adduplinkvlan import init_db as init_db_adduplinkvlan
@@ -124,6 +126,7 @@ init_db_oltcommand_showcardonutype(app)
 init_db_oltcommand_showvlan(app)
 init_db_oltcommand_showlistonu(app)
 init_db_oltcommand_showonustatus(app)
+init_db_oltcommand_showonustatussnmp(app)
 
 init_db_adddevicevlan(app)
 init_db_adduplinkvlan(app)

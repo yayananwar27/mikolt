@@ -101,6 +101,7 @@ raw_data = telnet_to_olt(host, username, password, port_telnet, command_power, c
 
 def parse_data(raw_data):
     import re
+    from datetime import datetime
     data = {}
 
     # Parse OLT RX
@@ -122,7 +123,20 @@ def parse_data(raw_data):
     # Parse ONU Online Duration
     onu_online_match = re.search(r"Online Duration:\s*(.+?)\\n", raw_data)
     data['onu_online'] = onu_online_match.group(1) if onu_online_match else None
-
+    if data['onu_online'] == '0h 0m 0s':
+        offline_times = re.findall(r"\\b\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\\b", raw_data)
+        offline_time_terakhir = offline_times[-1] if offline_times else None
+        format_waktu = "%Y-%m-%d %H:%M:%S"
+        waktu_terakhir = datetime.strptime(offline_time_terakhir, format_waktu)
+        waktu_sekarang = datetime.now()
+        selisih = waktu_sekarang - waktu_terakhir
+        hari = selisih.days
+        detik_sisa = selisih.seconds
+        jam = (detik_sisa // 3600) + (hari * 24 * 3600)
+        menit = (detik_sisa % 3600) // 60
+        detik = (detik_sisa % 3600) % 60
+        data['onu_online'] = f"{jam}h {menit}m {detik}s"
+        
     # Parse ONU Bytes Input
     onu_byte_input_match = re.search(r"Input peak rate : +(\d+)", raw_data)
     data['onu_byte_input'] = int(onu_byte_input_match.group(1)) if onu_byte_input_match else None

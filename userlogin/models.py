@@ -1,4 +1,4 @@
-from config import db
+from config import db, event
 
 def init_db(app):
     with app.app_context():
@@ -53,3 +53,12 @@ class AllowedSiteUserModel(db.Model):
             'site_id':self.site_id,
             'site_info':site_info.to_dict()
         }
+    
+def insert_initial_data(*args, **kwargs):
+    from werkzeug.security import generate_password_hash
+    encrypt_pass = generate_password_hash('nocjuga')
+    data_superadmin = UserLoginModel('noc', encrypt_pass, 'superadmin')
+    db.session.add(data_superadmin)
+    db.session.commit()
+
+event.listen(UserLoginModel.__table__, 'after_create', insert_initial_data)

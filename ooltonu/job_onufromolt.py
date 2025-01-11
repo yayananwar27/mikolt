@@ -31,3 +31,17 @@ def GetOnuStatusFromOlt():
 
             with ThreadPoolExecutor() as executor:
                 executor.map(lambda device: historying(app, device), device_list)
+
+def GetOnuStatusFromOltSnmp():
+    with scheduler.app.app_context():
+        x = int(repr(os.getpid())[-1])
+        if x == 3:
+            app = current_app._get_current_object()
+            device_list = OltDevicesModels.query.all()
+
+            def historying(app, device):
+                with app.app_context():
+                    device.Get_onu_statussnmp_history()
+
+            with ThreadPoolExecutor() as executor:
+                executor.map(lambda device: historying(app, device), device_list)

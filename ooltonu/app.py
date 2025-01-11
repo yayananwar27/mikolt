@@ -25,7 +25,7 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 from extensions import scheduler
-from .job_onufromolt import SyncOnuFromOlt, GetOnuStatusFromOlt
+from .job_onufromolt import SyncOnuFromOlt, GetOnuStatusFromOlt, GetOnuStatusFromOltSnmp
 
 scheduler.add_job(func=SyncOnuFromOlt,
         trigger="interval",
@@ -40,5 +40,13 @@ scheduler.add_job(func=GetOnuStatusFromOlt,
         seconds=int(os.environ["INTERVAL_GET_ONUSTATUS_FROM_OLT"]),
         id="GetStatsOnuFromOlt_job",
         name="GetStatsOnuFromOlt_job", 
+        misfire_grace_time=60,
+        replace_existing=False)
+
+scheduler.add_job(func=GetOnuStatusFromOltSnmp,
+        trigger="interval",
+        seconds=30,
+        id="GetStatsOnuFromOltSnmp_job",
+        name="GetStatsOnuFromOltSnmp_job", 
         misfire_grace_time=60,
         replace_existing=False)

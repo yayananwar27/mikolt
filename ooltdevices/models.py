@@ -226,6 +226,18 @@ class OltDevicesModels(db.Model):
             output = local_scope.get('output')  
         return output
 
+    def oltdevice_showonustatussnmp(self):
+        from ooltcommands.models_showonustatussnmp import OltCommandShowOnuStatusSnmpModel
+        script_python = OltCommandShowOnuStatusSnmpModel.query.filter_by(
+            id_software = self.id_software
+        ).first()
+        output = None
+        if script_python:
+            local_scope = {'self': self}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')  
+        return output
+
     #OLT Sync
     def add_list_card(self):
         card_list_exists = self.show_list_card()
@@ -485,6 +497,24 @@ class OltDevicesModels(db.Model):
                     db.session.delete(record)
                     db.session.commit()
 
+    def Get_onu_statussnmp_history(self):
+        from ooltonu.models import OltOnuConfiguredModels, OltOnuStatusHistoryModels
+        list_status = self.oltdevice_showonustatussnmp()
+
+        for status in list_status:
+            onu_exists = OltOnuConfiguredModels.query.filter_by(
+                id_device = self.id,
+                name = status['name']
+            ).first()
+            if onu_exists:
+                last_status = OltOnuStatusHistoryModels.query.filter_by(
+                    id_onu = onu_exists.id
+                ).order_by(OltOnuStatusHistoryModels.timestamp.desc()).first()
+                if last_status:
+                    last_status.onu_state = status['status']
+                    last_status.onu_online = status['duration']
+                    db.session.commit()
+                    
     #OLT add addan
     def add_uplink_vlantag(self, interface, vlan_tag):
         from ooltcommands.models_adduplinkvlan import OltCommandaddUplinkVlanModel
