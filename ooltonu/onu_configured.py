@@ -32,6 +32,9 @@ class OnuConfiguredSchema(Schema):
     site_name = fields.String(metadata={'description':'name site'})
     name = fields.String(metadata={'description':'onu name'})
     description = fields.String(metadata={'description':'onu description'})
+    onu_state = fields.String(metadata={'description':'onu state'})
+    olt_rx = fields.Integer(metadata={'description':'Olt Rx Signal'})
+    onu_rx = fields.Integer(metadata={'description':'Onu Rx Signal'})
 
 class ListOnuConfiguredSchema(Schema):
     data = fields.List(fields.Nested(OnuConfiguredSchema))
@@ -64,33 +67,46 @@ class OnuConfiguredApi(MethodResource, Resource):
                 list_device.append(_allowed.id)
 
         #get data server side
-        if ('page' in request.args and 'per_page' in request.args) or 'search' in request.args:
-            page = request.args.get('page', 1, type=int)
-            per_page = request.args.get('per_page', 10, type=int)
+        query = OltOnuConfiguredModels.query
+
+        query = query.filter(
+            OltOnuConfiguredModels.id_device.in_(list_device)
+            )
+
+            #filter custom attributes
+        y = [i for i in request.args.keys() if i not in ['page', 'per_page', 'search', 'onu_state']]
+        if len(y) > 0:
+            for x in y:
+                filter_value = request.args.get(x)
+                query = query.filter(getattr(OltOnuConfiguredModels, x) == filter_value)
+                
+        if 'search' in request.args:
             search = request.args.get('search', '', type=str)
-            query = OltOnuConfiguredModels.query
-
-            query = query.filter(
-                OltOnuConfiguredModels.id_device.in_(list_device)
-                )
-
             search_filter = or_(
                 OltOnuConfiguredModels.name.like(f'%{search}%'),
                 OltOnuConfiguredModels.description.like(f'%{search}%'),
                 OltOnuConfiguredModels.sn.like(f'%{search}%'),
             )
             query = query.filter(search_filter)
-            
-            pagination = query.paginate(page=page, per_page=per_page,error_out=False)
-        else:
-            query = OltOnuConfiguredModels.query
-            query = query.filter(
-                OltOnuConfiguredModels.id_device.in_(list_device)
-                )
-            query2 = query.all()
-            pagination = query.paginate(page=1, per_page=len(query2),error_out=False)
 
-        _data = [onu.to_dict() for onu in pagination.items]
+        if 'onu_state' in request.args:
+            onu_state = request.args.get('onu_state', 'working', type=str)
+            _query_state = query.all()
+
+            list_state = [onu.to_dict_list() for onu in _query_state]
+            filtered_data = [item['id'] for item in list_state if item["onu_state"] == onu_state]
+            query = query.filter(OltOnuConfiguredModels.id.in_(filtered_data))
+
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', len(query.all()), type=int)
+            
+        if 'page' in request.args and 'per_page' in request.args:
+            page = request.args.get('page', 1, type=int)
+            per_page = request.args.get('per_page', 25, type=int)
+
+        pagination = query.paginate(page=page, per_page=per_page,error_out=False)
+        
+        _data = [onu.to_dict_list() for onu in pagination.items]
 
         return jsonify({
             'total': pagination.total,

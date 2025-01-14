@@ -23,7 +23,7 @@ class OltOnuConfiguredModels(db.Model):
     description = db.Column(db.String(255), nullable=True)
     oltonuservicevlans_fk = db.relationship('OltOnuServiceVlansModels', backref='oltonuservicevlans', cascade="all, delete", passive_deletes=True, lazy='dynamic')
     oltonuhistory_fk = db.relationship('OltOnuStatusHistoryModels', backref='oltonuhistory', cascade="all, delete", passive_deletes=True, lazy='dynamic')
-    oltonuhistory_fk = db.relationship('OltOnuStatusHistoryModels', backref='oltonuhistory', cascade="all, delete", passive_deletes=True, lazy='dynamic')
+    oltonulogging_fk = db.relationship('OltOnuLoggingModels', backref='oltonuhistory', cascade="all, delete", passive_deletes=True, lazy='dynamic')
 
 
     def __init__(self, id_device, id_card, id_cardpon, id_cardpononu, sn, onu_type, name, description=None):
@@ -70,6 +70,50 @@ class OltOnuConfiguredModels(db.Model):
         }
         return data
     
+    def to_dict_list(self):
+        from ooltdevices.models import OltDevicesModels
+        get_name_device = OltDevicesModels.query.filter_by(id=self.id_device).first()
+        name_device = get_name_device.name
+        id_site = get_name_device.id_site
+
+        from ooltdevices.models import OltDevicesCardModels
+        get_cardframeslot = OltDevicesCardModels.query.filter_by(id=self.id_card).first()
+
+        from ooltdevices.models import OltDevicesCardPonModels
+        get_cardponport = OltDevicesCardPonModels.query.filter_by(id=self.id_cardpon).first()
+
+        gpon_onu = 'gpon-onu_{0}/{1}/{2}:{3}'.format(get_cardframeslot.frame, get_cardframeslot.slot, get_cardponport.port, self.id_cardpononu)
+        
+        from sites.models import SitesModel
+        get_site = SitesModel.query.filter_by(site_id=id_site).first()
+
+        #laststatushistory
+        last_status = OltOnuStatusHistoryModels.query.filter_by(
+            id_onu=self.id
+            ).order_by(OltOnuStatusHistoryModels.timestamp.desc()).first()
+
+
+        data = {
+            'id':self.id,
+            'id_device':self.id_device,
+            'name_device':name_device,
+            'id_card':self.id_card,
+            'id_cardpon':self.id_cardpon,
+            'id_cardpononu':self.id_cardpononu,
+            'onu':gpon_onu,
+            'sn':self.sn,
+            'onu_type':self.onu_type,
+            'site_id': id_site,
+            'site_name':get_site.name,
+            'name':self.name,
+            'description':self.description,
+            'onu_state':last_status.onu_state,
+            'olt_rx':last_status.olt_rx,
+            'onu_rx':last_status.onu_rx
+
+        }
+        return data
+
     def info_to_dict(self):
         from ooltdevices.models import OltDevicesModels
         get_name_device = OltDevicesModels.query.filter_by(id=self.id_device).first()
