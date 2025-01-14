@@ -98,7 +98,7 @@ class OnuConfiguredApi(MethodResource, Resource):
             query = query.filter(OltOnuConfiguredModels.id.in_(filtered_data))
 
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', len(query.all()), type=int)
+        per_page = request.args.get('per_page', len(query.count()), type=int)
             
         if 'page' in request.args and 'per_page' in request.args:
             page = request.args.get('page', 1, type=int)
