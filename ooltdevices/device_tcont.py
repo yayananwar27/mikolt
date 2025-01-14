@@ -17,8 +17,8 @@ def created_time():
 
 from .device_card import IdOltDeviceShowCardSchema
 
-class OltDeviceOnuTypeapi(MethodResource, Resource):
-    @doc(description='Show Olt Onu type', tags=['OLT Device'], security=[{"ApiKeyAuth": []}])
+class OltDeviceListTcontapi(MethodResource, Resource):
+    @doc(description='Show Olt Onu Tcont List Name', tags=['OLT Device'], security=[{"ApiKeyAuth": []}])
     @use_kwargs(IdOltDeviceShowCardSchema, location=('json'))
     @auth.login_required(role=['api', 'noc', 'superadmin', 'teknisi'])
     def post(self, **kwargs):
@@ -38,12 +38,12 @@ class OltDeviceOnuTypeapi(MethodResource, Resource):
             ).order_by(OltDevicesModels.name.asc()).first()
 
             if found_record:
-             data = found_record.oltdevice_showonutype()
+             data = found_record.oltdevice_showtcont()
 
         else:
             found_record = OltDevicesModels.query.filter_by(id=id).first()
             if found_record:
-                data = found_record.oltdevice_showonutype()
+                data = found_record.oltdevice_showtcont()
 
         return data
     

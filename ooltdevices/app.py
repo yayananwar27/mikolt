@@ -10,7 +10,7 @@ from .device import OltDeviceapi, InfoOltDeviceapi
 from .device_card import OltDeviceCardapi, OltDeviceCardPonapi, OltDeviceCardUplinkapi
 from .device_onutype import OltDeviceOnuTypeapi
 from .device_vlans import OltDeviceVlansapi, UpdateOltDeviceVlansapi, CudOltDeviceVlansapi
-
+from .device_tcont import OltDeviceListTcontapi
 from .device_card_uplinkvlans import OltDeviceCardUplinkVlanTagapi
 
 api.add_resource(OltDeviceapi, '')
@@ -23,6 +23,7 @@ api.add_resource(OltDeviceOnuTypeapi, '/onutype')
 api.add_resource(OltDeviceVlansapi, '/vlan')
 api.add_resource(UpdateOltDeviceVlansapi, '/vlan/sync')
 api.add_resource(CudOltDeviceVlansapi, '/vlan/action')
+api.add_resource(OltDeviceListTcontapi, '/tcont')
 
 def init_docs(docs):
     docs.register(OltDeviceapi, blueprint='oltdevices_api')    
@@ -35,4 +36,5 @@ def init_docs(docs):
     docs.register(OltDeviceVlansapi, blueprint='oltdevices_api')
     docs.register(UpdateOltDeviceVlansapi, blueprint='oltdevices_api')
     docs.register(CudOltDeviceVlansapi, blueprint='oltdevices_api')
+    docs.register(OltDeviceListTcontapi, blueprint='oltdevices_api')
     

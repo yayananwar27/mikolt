@@ -78,7 +78,8 @@ class OnuConfiguredApi(MethodResource, Resource):
         if len(y) > 0:
             for x in y:
                 filter_value = request.args.get(x)
-                query = query.filter(getattr(OltOnuConfiguredModels, x) == filter_value)
+                if len(filter_value)>0:
+                    query = query.filter(getattr(OltOnuConfiguredModels, x) == filter_value)
                 
         if 'search' in request.args:
             search = request.args.get('search', '', type=str)
@@ -91,14 +92,14 @@ class OnuConfiguredApi(MethodResource, Resource):
 
         if 'onu_state' in request.args:
             onu_state = request.args.get('onu_state', 'working', type=str)
-            _query_state = query.all()
-
-            list_state = [onu.to_dict_list() for onu in _query_state]
-            filtered_data = [item['id'] for item in list_state if item["onu_state"] == onu_state]
-            query = query.filter(OltOnuConfiguredModels.id.in_(filtered_data))
+            if len(onu_state)>0:
+                _query_state = query.all()
+                list_state = [onu.to_dict_list() for onu in _query_state]
+                filtered_data = [item['id'] for item in list_state if item["onu_state"] == onu_state]
+                query = query.filter(OltOnuConfiguredModels.id.in_(filtered_data))
 
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', len(query.count()), type=int)
+        per_page = request.args.get('per_page', query.count(), type=int)
             
         if 'page' in request.args and 'per_page' in request.args:
             page = request.args.get('page', 1, type=int)
@@ -216,3 +217,17 @@ class InfoOnuConfiguredStatusRawApi(MethodResource, Resource):
         
         data = raw_status.out_raw()
         return jsonify(data)
+
+
+class OnuConfiguredStatusListApi(MethodResource, Resource):
+    @doc(description='List Onu configured Status List', tags=['OLT Onu'], security=[{"ApiKeyAuth": []}])
+    @auth.login_required(role=['api','noc', 'superadmin', 'teknisi','admin'])
+    def get(self):
+        query = db.session.query(
+            OltOnuStatusHistoryModels.onu_state
+        ).group_by(OltOnuStatusHistoryModels.onu_state).all()
+        data = []
+        for x in query:
+            data.append(x.onu_state)
+
+        return data

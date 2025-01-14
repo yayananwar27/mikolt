@@ -190,6 +190,19 @@ class OltDevicesModels(db.Model):
             output = local_scope.get('output')   
         return output
     
+    def oltdevice_showtcont(self):
+        from ooltcommands.models_showolttcont import OltCommandShowOltTcontModel
+        script_python = OltCommandShowOltTcontModel.query.filter_by(
+            id_software = self.id_software
+        ).first()
+        output = None
+        if script_python:
+            local_scope = {'self': self}
+            exec(script_python.script_python, {}, local_scope)
+            output = local_scope.get('output')   
+        return output
+    
+
     def oltdevice_showvlan(self):
         from ooltcommands.models_showvlan import OltCommandShowVlanModel
         script_python = OltCommandShowVlanModel.query.filter_by(
@@ -619,6 +632,7 @@ class OltDevicesModels(db.Model):
             data.append(vlan.to_dict())
         
         return data
+
 
     #delete deletan
     def delete_list_card(self):
